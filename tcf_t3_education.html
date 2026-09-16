@@ -1170,6 +1170,21 @@ header {
 .arg-panel.contre .arg-item:hover { background: var(--contre-bg); }
 .arg-item-hint { display: none; }
 
+
+/* ── TIMER · Task 3 timer (classroom use)── */
+.t3-timer-bar{display:flex;align-items:center;gap:.9rem;background:var(--mli-light);border:1.6px solid var(--mli-blue);border-radius:14px;padding:.75rem 1.1rem;margin:1.1rem 0 .2rem;flex-wrap:wrap;box-shadow:var(--shadow);}
+.t3-timer-display{font-size:2rem;font-weight:800;color:var(--mli-dark);font-variant-numeric:tabular-nums;letter-spacing:2px;min-width:96px;line-height:1;}
+.t3-timer-display.warning{color:#E08A00;}
+.t3-timer-display.danger{color:#E03B3B;animation:t3flash .8s infinite;}
+@keyframes t3flash{0%,100%{opacity:1}50%{opacity:.25}}
+.t3-timer-label{font-size:.86rem;color:var(--mli-grey);flex:1;min-width:150px;line-height:1.35;}
+.t3-timer-btn{padding:.55rem 1.25rem;border-radius:20px;border:none;background:var(--mli-blue);color:#fff;font-size:.92rem;font-weight:700;cursor:pointer;transition:filter .15s,background .15s;white-space:nowrap;font-family:inherit;}
+.t3-timer-btn:hover{filter:brightness(1.07);}
+.t3-timer-btn.running{background:#E08A00;}
+.t3-timer-btn.done{background:var(--mli-green);}
+
+.fs-btn{margin-left:.8rem;padding:.5rem 1.05rem;border-radius:16px;border:1.5px solid var(--mli-blue);background:#fff;color:var(--mli-blue);font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.fs-btn:hover{background:var(--mli-blue);color:#fff;}
 </style>
 </head>
 <body>
@@ -1182,11 +1197,12 @@ header {
     <div class="header-divider"></div>
     <div class="header-title">
       <h1>TCF Canada · Tâche 3</h1>
-      <div class="sub">口语备考 — Expression d'un point de vue</div>
+      <div class="sub">Speaking exam prep — Expression d'un point de vue</div>
     </div>
   </div>
   <nav class="tab-nav">
     <span class="tab-btn active">📚 L'Éducation</span>
+    <button class="fs-btn" id="fsBtn" onclick="toggleFS()">⛶ Fullscreen</button>
   </nav>
 </header>
 
@@ -1196,7 +1212,7 @@ header {
     <span class="cat-page-icon">📚</span>
     <div style="flex:1">
       <div class="cat-page-title">L'Éducation</div>
-      <div class="cat-page-cn">教育</div>
+      <div class="cat-page-cn">Education</div>
     </div>
     <button class="extra-toggle-btn" id="extra-toggle-btn" onclick="toggleExtra()" style="display:none">
       🎯 Plus de sujets <span id="extra-count"></span>
@@ -1212,7 +1228,11 @@ header {
   <div class="detail-question-box">
     <div class="q-label">🎙️ Question · TCF Canada Tâche 3</div>
     <div class="q-fr" id="detail-qfr"></div>
-    <div class="q-cn" id="detail-qcn"></div>
+  </div>
+  <div class="t3-timer-bar" id="t3-timer">
+    <div class="t3-timer-display" id="t3-timer-display">4:30</div>
+    <div class="t3-timer-label">🎤 Task 3 · Expression d'un point de vue — 4 min 30 (no preparation) </div>
+    <button class="t3-timer-btn" id="t3-timer-btn" onclick="t3TimerAction()">▶ Start</button>
   </div>
   <div class="detail-tabs">
     <button class="dtab active" onclick="switchTab('arguments')">💬 Arguments</button>
@@ -1222,25 +1242,25 @@ header {
   <div class="dtab-content active" id="tab-arguments">
     <div class="arg-cols">
       <div class="arg-panel pour">
-        <div class="arg-panel-head">✅ Pour <span class="cn-label">（赞成）</span></div>
+        <div class="arg-panel-head">✅ Pour <span class="cn-label">(For)</span></div>
         <div class="arg-list" id="arg-pour"></div>
       </div>
       <div class="arg-panel contre">
-        <div class="arg-panel-head">❌ Contre <span class="cn-label">（反对）</span></div>
+        <div class="arg-panel-head">❌ Contre <span class="cn-label">(Against)</span></div>
         <div class="arg-list" id="arg-contre"></div>
       </div>
     </div>
     
     <!-- STRUCTURE DE RÉPONSE -->
     <div class="struct-box" id="struct-box">
-      <div class="struct-box-title">📋 Structure de réponse · 回答结构</div>
+      <div class="struct-box-title">📋 Structure de réponse · Answer structure</div>
 
       <div class="struct-row ssl-intro-row">
         <div class="struct-section-label ssl-intro">🟢 Introduction</div>
         <div class="struct-lines">
           <div class="struct-line">Merci de m'avoir donné la parole.</div>
           <div class="struct-line">C'est un sujet très intéressant.</div>
-          <div class="struct-line">La question est : <span class="struct-blank">[题目]</span></div>
+          <div class="struct-line">La question est : <span class="struct-blank">[topic]</span></div>
           <div class="struct-line">Pour ma part, je pense que <span class="struct-blank">___</span> , et je vais vous expliquer pourquoi.</div>
         </div>
       </div>
@@ -1289,613 +1309,571 @@ header {
 <script>
 const CAT_ID = 'education';
 const CAT_LABEL = "L'Éducation";
-const CAT_CN = '教育';
+const CAT_CN = 'Education';
 const CAT_ICON = '📚';
 
 const QS = [
   // ── LA VIE QUOTIDIENNE ──
   { cat:'quotidien',
     fr:"Faut-il rendre les transports en commun gratuits en ville ?",
-    cn:"城市公共交通应该免费吗？",
     pour:[
-      { arg:"Avantages économiques : amélioration du pouvoir d'achat des citoyens", cn:"经济优势：提升市民购买力", ex:"Les personnes à faible revenu économisent des centaines d'euros par an et peuvent mieux se nourrir ou se loger." },
-      { arg:"Bénéfices environnementaux : réduction de la pollution atmosphérique et des émissions de CO₂", cn:"环保效益：减少大气污染和碳排放", ex:"À Tallinn (Estonie), la gratuité a augmenté l'utilisation des bus de 14 % dès la première année." },
-      { arg:"Justice sociale : égalité d'accès à la mobilité urbaine pour tous", cn:"社会公正：所有人平等获得城市交通权利", ex:"Les étudiants, seniors et personnes handicapées peuvent se déplacer librement sans contrainte financière." },
-      { arg:"Réduction du trafic : diminution des embouteillages et amélioration de la sécurité routière", cn:"减少交通：缓解拥堵并改善道路安全", ex:"Moins de voitures en ville signifie moins d'accidents, moins de bruit et plus d'espace pour les piétons." },
-      { arg:"Qualité de vie : moins de stress lié aux déplacements, ville plus conviviale", cn:"生活质量：减少出行压力，城市更宜居", ex:"Des villes comme Dunkerque ont prouvé que la gratuité améliorait la satisfaction des habitants." },
+      { arg:"Avantages économiques : amélioration du pouvoir d'achat des citoyens", ex:"Les personnes à faible revenu économisent des centaines d'euros par an et peuvent mieux se nourrir ou se loger." },
+      { arg:"Bénéfices environnementaux : réduction de la pollution atmosphérique et des émissions de CO₂", ex:"À Tallinn (Estonie), la gratuité a augmenté l'utilisation des bus de 14 % dès la première année." },
+      { arg:"Justice sociale : égalité d'accès à la mobilité urbaine pour tous", ex:"Les étudiants, seniors et personnes handicapées peuvent se déplacer librement sans contrainte financière." },
+      { arg:"Réduction du trafic : diminution des embouteillages et amélioration de la sécurité routière", ex:"Moins de voitures en ville signifie moins d'accidents, moins de bruit et plus d'espace pour les piétons." },
+      { arg:"Qualité de vie : moins de stress lié aux déplacements, ville plus conviviale", ex:"Des villes comme Dunkerque ont prouvé que la gratuité améliorait la satisfaction des habitants." },
     ],
     contre:[
-      { arg:"Coût très élevé pour les collectivités locales, nécessité de financement alternatif", cn:"对地方政府成本极高，需要替代资金来源", ex:"Sans recettes tarifaires, il faut augmenter les impôts locaux ou réduire d'autres services publics." },
-      { arg:"Risque de saturation du réseau et de dégradation du service", cn:"网络饱和风险和服务质量下降", ex:"Si tout le monde prend le bus, les temps d'attente s'allongent et le confort diminue." },
-      { arg:"Résistance politique et fiscale des contribuables", cn:"纳税人的政治和财政阻力", ex:"Les élus doivent justifier ces dépenses auprès d'une population qui ne prend pas forcément les transports en commun." },
+      { arg:"Coût très élevé pour les collectivités locales, nécessité de financement alternatif", ex:"Sans recettes tarifaires, il faut augmenter les impôts locaux ou réduire d'autres services publics." },
+      { arg:"Risque de saturation du réseau et de dégradation du service", ex:"Si tout le monde prend le bus, les temps d'attente s'allongent et le confort diminue." },
+      { arg:"Résistance politique et fiscale des contribuables", ex:"Les élus doivent justifier ces dépenses auprès d'une population qui ne prend pas forcément les transports en commun." },
     ],
   },
   { cat:'quotidien',
     fr:"Est-il agréable de vivre en ville ou à la campagne ?",
-    cn:"住在城市还是乡村更惬意？",
     pour:[
-      { arg:"Avantages de la ville : opportunités professionnelles nombreuses et accès aux services", cn:"城市优势：大量就业机会和完善服务", ex:"Les hôpitaux, universités, transports et commerces sont concentrés et accessibles rapidement." },
-      { arg:"Avantages de la campagne : environnement naturel, qualité de l'air et tranquillité", cn:"乡村优势：自然环境、清洁空气和宁静", ex:"Des études montrent que les personnes vivant près de la nature ont moins d'anxiété et un meilleur sommeil." },
-      { arg:"Coût de la vie moins élevé à la campagne : logement et alimentation plus accessibles", cn:"农村生活成本更低：住房和食品更实惠", ex:"Un appartement en zone rurale coûte deux à trois fois moins cher qu'en grande ville." },
-      { arg:"Relations sociales plus authentiques et solidarité de village à la campagne", cn:"农村人际关系更真实，邻里守望相助", ex:"Dans un petit village, les voisins se connaissent, s'entraident et créent un réseau de solidarité réel." },
+      { arg:"Avantages de la ville : opportunités professionnelles nombreuses et accès aux services", ex:"Les hôpitaux, universités, transports et commerces sont concentrés et accessibles rapidement." },
+      { arg:"Avantages de la campagne : environnement naturel, qualité de l'air et tranquillité", ex:"Des études montrent que les personnes vivant près de la nature ont moins d'anxiété et un meilleur sommeil." },
+      { arg:"Coût de la vie moins élevé à la campagne : logement et alimentation plus accessibles", ex:"Un appartement en zone rurale coûte deux à trois fois moins cher qu'en grande ville." },
+      { arg:"Relations sociales plus authentiques et solidarité de village à la campagne", ex:"Dans un petit village, les voisins se connaissent, s'entraident et créent un réseau de solidarité réel." },
     ],
     contre:[
-      { arg:"Inconvénients de la ville : pollution, coût de la vie élevé et stress", cn:"城市缺点：污染、高生活成本和压力", ex:"La pollution sonore et atmosphérique des grandes villes est associée à de nombreuses maladies chroniques." },
-      { arg:"Inconvénients de la campagne : isolement, transports insuffisants, manque de services médicaux", cn:"农村缺点：隔离、交通不足、医疗服务匮乏", ex:"Les 'déserts médicaux' touchent des millions de ruraux qui doivent parcourir des dizaines de km pour voir un spécialiste." },
-      { arg:"Difficultés professionnelles à la campagne : peu d'emplois qualifiés disponibles", cn:"农村职业困难：合格就业岗位稀少", ex:"Sans voiture, il est presque impossible de trouver un emploi correspondant à ses qualifications en zone rurale." },
+      { arg:"Inconvénients de la ville : pollution, coût de la vie élevé et stress", ex:"La pollution sonore et atmosphérique des grandes villes est associée à de nombreuses maladies chroniques." },
+      { arg:"Inconvénients de la campagne : isolement, transports insuffisants, manque de services médicaux", ex:"Les 'déserts médicaux' touchent des millions de ruraux qui doivent parcourir des dizaines de km pour voir un spécialiste." },
+      { arg:"Difficultés professionnelles à la campagne : peu d'emplois qualifiés disponibles", ex:"Sans voiture, il est presque impossible de trouver un emploi correspondant à ses qualifications en zone rurale." },
     ],
   },
   { cat:'quotidien',
     fr:"Pensez-vous qu'il faut être riche pour être heureux ?",
-    cn:"您认为需要富有才能幸福吗？",
     pour:[
-      { arg:"La sécurité financière élimine le stress des soucis quotidiens", cn:"财务安全消除日常忧虑带来的压力", ex:"Ne pas s'inquiéter du loyer, des factures ou de la nourriture libère une énergie mentale précieuse." },
-      { arg:"La richesse permet l'accès aux soins de santé, à l'éducation et à la liberté de choix", cn:"财富提供医疗、教育和选择自由", ex:"Avec de l'argent, on peut choisir son médecin, ses études, son quartier et même quitter un emploi toxique." },
-      { arg:"Les expériences enrichissantes (voyages, culture, loisirs) nécessitent souvent de l'argent", cn:"丰富体验（旅行、文化、休闲）往往需要金钱", ex:"Voyager, accéder à des concerts ou des formations de qualité demande un certain niveau de revenu." },
+      { arg:"La sécurité financière élimine le stress des soucis quotidiens", ex:"Ne pas s'inquiéter du loyer, des factures ou de la nourriture libère une énergie mentale précieuse." },
+      { arg:"La richesse permet l'accès aux soins de santé, à l'éducation et à la liberté de choix", ex:"Avec de l'argent, on peut choisir son médecin, ses études, son quartier et même quitter un emploi toxique." },
+      { arg:"Les expériences enrichissantes (voyages, culture, loisirs) nécessitent souvent de l'argent", ex:"Voyager, accéder à des concerts ou des formations de qualité demande un certain niveau de revenu." },
     ],
     contre:[
-      { arg:"Le bonheur repose avant tout sur les relations humaines, la santé et le sens de la vie", cn:"幸福首先建立在人际关系、健康和生命意义之上", ex:"Des études scientifiques montrent que passé un seuil de confort, l'argent supplémentaire n'augmente plus le bonheur." },
-      { arg:"La poursuite de la richesse peut générer stress, isolement et perte de valeurs", cn:"追求财富可能带来压力、孤独和价值观丧失", ex:"Le syndrome du 'toujours plus' empêche de profiter de ce qu'on possède déjà." },
-      { arg:"Le bonheur simple et authentique : joie des plaisirs gratuits, solidarité et gratitude", cn:"简单真实的幸福：免费乐趣、团结互助和感恩之情", ex:"Les plaisirs simples — une promenade, un repas partagé, un coucher de soleil — ne coûtent rien." },
-      { arg:"La richesse émotionnelle et spirituelle est plus déterminante que la richesse matérielle", cn:"情感和精神财富比物质财富更重要", ex:"Des pays moins riches comme le Bhutan affichent des indices de bonheur supérieurs à beaucoup de pays développés." },
+      { arg:"Le bonheur repose avant tout sur les relations humaines, la santé et le sens de la vie", ex:"Des études scientifiques montrent que passé un seuil de confort, l'argent supplémentaire n'augmente plus le bonheur." },
+      { arg:"La poursuite de la richesse peut générer stress, isolement et perte de valeurs", ex:"Le syndrome du 'toujours plus' empêche de profiter de ce qu'on possède déjà." },
+      { arg:"Le bonheur simple et authentique : joie des plaisirs gratuits, solidarité et gratitude", ex:"Les plaisirs simples — une promenade, un repas partagé, un coucher de soleil — ne coûtent rien." },
+      { arg:"La richesse émotionnelle et spirituelle est plus déterminante que la richesse matérielle", ex:"Des pays moins riches comme le Bhutan affichent des indices de bonheur supérieurs à beaucoup de pays développés." },
     ],
   },
   { cat:'quotidien',
     fr:"À votre avis, une personne âgée a-t-elle une meilleure qualité de vie en ville qu'à la campagne ?",
-    cn:"您认为老年人在城市的生活质量比在农村更好吗？",
     pour:[
-      { arg:"En ville : proximité des services de santé, hôpitaux et spécialistes", cn:"城市：靠近医疗服务、医院和专科医生", ex:"En cas d'urgence, les soins sont accessibles en quelques minutes en ville." },
-      { arg:"En ville : transports en commun permettant l'autonomie sans voiture", cn:"城市：公共交通让老年人无需驾车也能自主出行", ex:"Métro, bus et taxis adaptés permettent aux seniors de se déplacer librement même sans permis de conduire." },
-      { arg:"En ville : richesse culturelle, activités et liens sociaux pour rompre l'isolement", cn:"城市：丰富的文化活动和社交联系，打破孤独", ex:"Centres seniors, musées, bibliothèques et associations permettent aux personnes âgées de rester actives." },
+      { arg:"En ville : proximité des services de santé, hôpitaux et spécialistes", ex:"En cas d'urgence, les soins sont accessibles en quelques minutes en ville." },
+      { arg:"En ville : transports en commun permettant l'autonomie sans voiture", ex:"Métro, bus et taxis adaptés permettent aux seniors de se déplacer librement même sans permis de conduire." },
+      { arg:"En ville : richesse culturelle, activités et liens sociaux pour rompre l'isolement", ex:"Centres seniors, musées, bibliothèques et associations permettent aux personnes âgées de rester actives." },
     ],
     contre:[
-      { arg:"À la campagne : environnement calme, air pur et nature favorable à la santé physique et mentale", cn:"农村：宁静环境、清洁空气和自然环境有益身心健康", ex:"Les études montrent que vivre près de la nature réduit le stress et améliore la qualité du sommeil des seniors." },
-      { arg:"À la campagne : solidarité de voisinage et liens communautaires plus forts", cn:"农村：更强的邻里互助和社区纽带", ex:"Dans les petits villages, les seniors sont moins seuls car tout le monde se connaît et s'entraide naturellement." },
-      { arg:"Coût de la vie moins élevé à la campagne, logement plus adapté et spacieux", cn:"农村生活成本更低，住房更宽敞适合老年人", ex:"Une maison avec jardin en zone rurale coûte moins cher qu'un appartement en ville et offre plus de confort." },
+      { arg:"À la campagne : environnement calme, air pur et nature favorable à la santé physique et mentale", ex:"Les études montrent que vivre près de la nature réduit le stress et améliore la qualité du sommeil des seniors." },
+      { arg:"À la campagne : solidarité de voisinage et liens communautaires plus forts", ex:"Dans les petits villages, les seniors sont moins seuls car tout le monde se connaît et s'entraide naturellement." },
+      { arg:"Coût de la vie moins élevé à la campagne, logement plus adapté et spacieux", ex:"Une maison avec jardin en zone rurale coûte moins cher qu'un appartement en ville et offre plus de confort." },
     ],
   },
   { cat:'famille',
     fr:"Vivre avec ses parents après l'âge de 25 ans : qu'en pensez-vous ?",
-    cn:"25岁后与父母同住，您怎么看？",
     pour:[
-      { arg:"Avantages économiques : économies importantes sur le logement et les charges", cn:"经济优势：大幅节省住房和生活费用", ex:"Les loyers ont doublé en dix ans dans les grandes villes — rester chez ses parents permet d'épargner pour un projet." },
-      { arg:"Soutien familial mutuel et solidarité intergénérationnelle", cn:"相互家庭支持和代际团结", ex:"Les parents aident à garder les enfants, les jeunes adultes aident les parents vieillissants — un échange gagnant-gagnant." },
-      { arg:"Transition progressive vers l'autonomie : le temps de trouver un emploi ou terminer des études", cn:"渐进式走向自主：找工作或完成学业期间的过渡", ex:"La recherche d'emploi et les études sont moins stressantes quand on n'a pas à payer un loyer." },
+      { arg:"Avantages économiques : économies importantes sur le logement et les charges", ex:"Les loyers ont doublé en dix ans dans les grandes villes — rester chez ses parents permet d'épargner pour un projet." },
+      { arg:"Soutien familial mutuel et solidarité intergénérationnelle", ex:"Les parents aident à garder les enfants, les jeunes adultes aident les parents vieillissants — un échange gagnant-gagnant." },
+      { arg:"Transition progressive vers l'autonomie : le temps de trouver un emploi ou terminer des études", ex:"La recherche d'emploi et les études sont moins stressantes quand on n'a pas à payer un loyer." },
     ],
     contre:[
-      { arg:"Limitation de l'autonomie personnelle et du développement de l'indépendance", cn:"限制个人自主性和独立性的发展", ex:"Gérer son budget, ses conflits et ses responsabilités seul est essentiel pour grandir en tant qu'adulte." },
-      { arg:"Difficultés dans la vie sentimentale et manque d'intimité", cn:"情感生活困难和缺乏私密空间", ex:"Il est difficile de construire une relation de couple épanouie sous le même toit que ses parents." },
-      { arg:"Conflits de générations et différences dans les modes de vie", cn:"代际冲突和生活方式差异", ex:"Les horaires, habitudes et valeurs différents entre générations peuvent créer des tensions au quotidien." },
+      { arg:"Limitation de l'autonomie personnelle et du développement de l'indépendance", ex:"Gérer son budget, ses conflits et ses responsabilités seul est essentiel pour grandir en tant qu'adulte." },
+      { arg:"Difficultés dans la vie sentimentale et manque d'intimité", ex:"Il est difficile de construire une relation de couple épanouie sous le même toit que ses parents." },
+      { arg:"Conflits de générations et différences dans les modes de vie", ex:"Les horaires, habitudes et valeurs différents entre générations peuvent créer des tensions au quotidien." },
     ],
   },
   { cat:'quotidien',
     fr:"Pensez-vous qu'il faut gagner beaucoup d'argent pour profiter pleinement de la vie ?",
-    cn:"您认为需要赚很多钱才能充分享受生活吗？",
     pour:[
-      { arg:"Sécurité et tranquillité : l'argent élimine les soucis financiers quotidiens et le stress", cn:"安全与平静：金钱消除日常财务压力", ex:"Avoir de l'épargne permet de dormir sereinement et de faire face aux imprévus sans panique." },
-      { arg:"Liberté et opportunités : voyager, accéder à l'éducation, choisir son mode de vie", cn:"自由与机遇：旅行、获得教育、选择生活方式", ex:"Indépendance financière signifie pouvoir choisir son emploi, sa ville, ses expériences sans contrainte." },
-      { arg:"Accès aux soins, à une alimentation saine et à un logement confortable", cn:"获得医疗、健康饮食和舒适住房", ex:"Sans argent suffisant, même les besoins fondamentaux comme se soigner ou bien manger deviennent difficiles." },
+      { arg:"Sécurité et tranquillité : l'argent élimine les soucis financiers quotidiens et le stress", ex:"Avoir de l'épargne permet de dormir sereinement et de faire face aux imprévus sans panique." },
+      { arg:"Liberté et opportunités : voyager, accéder à l'éducation, choisir son mode de vie", ex:"Indépendance financière signifie pouvoir choisir son emploi, sa ville, ses expériences sans contrainte." },
+      { arg:"Accès aux soins, à une alimentation saine et à un logement confortable", ex:"Sans argent suffisant, même les besoins fondamentaux comme se soigner ou bien manger deviennent difficiles." },
     ],
     contre:[
-      { arg:"Bonheur simple et authentique : les plaisirs gratuits comptent autant que les achats", cn:"简单真实的幸福：免费的乐趣与购物一样重要", ex:"Les relations humaines, la nature, la créativité et le temps libre ne nécessitent pas de gros revenus." },
-      { arg:"Temps et priorités : profiter de la vie, c'est avoir du temps libre, pas forcément de l'argent", cn:"时间与优先级：享受生活意味着有空闲时间，不一定要有钱", ex:"Quelqu'un qui travaille 80 heures par semaine pour gagner beaucoup n'a pas le temps de profiter de la vie." },
-      { arg:"Solidarité et générosité : la joie de donner et d'aider enrichit bien plus que la richesse matérielle", cn:"团结与慷慨：给予和帮助的喜悦远比物质财富更丰盛", ex:"Des études en psychologie positive montrent que les actes généreux augmentent significativement le bonheur." },
+      { arg:"Bonheur simple et authentique : les plaisirs gratuits comptent autant que les achats", ex:"Les relations humaines, la nature, la créativité et le temps libre ne nécessitent pas de gros revenus." },
+      { arg:"Temps et priorités : profiter de la vie, c'est avoir du temps libre, pas forcément de l'argent", ex:"Quelqu'un qui travaille 80 heures par semaine pour gagner beaucoup n'a pas le temps de profiter de la vie." },
+      { arg:"Solidarité et générosité : la joie de donner et d'aider enrichit bien plus que la richesse matérielle", ex:"Des études en psychologie positive montrent que les actes généreux augmentent significativement le bonheur." },
     ],
   },
 
   // ── L'ÉDUCATION ──
   { cat:'education',
     fr:"Faut-il adopter une éducation stricte ? Qu'en pensez-vous ?",
-    cn:"应该采用严格的教育方式吗？",
     pour:[
-      { arg:"Développe la discipline, l'autodiscipline et le respect de l'autorité", cn:"培养纪律性、自律性和对权威的尊重", ex:"Les enfants éduqués avec des règles claires apprennent à respecter les engagements et les délais dès le plus jeune âge." },
-      { arg:"Prépare mieux aux réalités du monde professionnel et aux exigences de la société", cn:"更好地为职业现实和社会要求做准备", ex:"La ponctualité, la rigueur et la persévérance sont des qualités très recherchées dans le monde du travail." },
-      { arg:"Améliore les résultats scolaires et développe les habitudes de travail", cn:"提升学业成绩，培养学习习惯", ex:"Des études comparatives montrent que les systèmes éducatifs asiatiques très structurés produisent d'excellents résultats académiques." },
-      { arg:"Inculque des valeurs morales solides et réduit les comportements déviants", cn:"灌输坚实的道德价值观，减少越轨行为", ex:"Des règles claires et des conséquences bien définies aident l'enfant à distinguer le bien du mal." },
+      { arg:"Développe la discipline, l'autodiscipline et le respect de l'autorité", ex:"Les enfants éduqués avec des règles claires apprennent à respecter les engagements et les délais dès le plus jeune âge." },
+      { arg:"Prépare mieux aux réalités du monde professionnel et aux exigences de la société", ex:"La ponctualité, la rigueur et la persévérance sont des qualités très recherchées dans le monde du travail." },
+      { arg:"Améliore les résultats scolaires et développe les habitudes de travail", ex:"Des études comparatives montrent que les systèmes éducatifs asiatiques très structurés produisent d'excellents résultats académiques." },
+      { arg:"Inculque des valeurs morales solides et réduit les comportements déviants", ex:"Des règles claires et des conséquences bien définies aident l'enfant à distinguer le bien du mal." },
     ],
     contre:[
-      { arg:"Peut entraver la créativité, l'expression personnelle et l'initiative", cn:"可能阻碍创造力、个人表达和主动性", ex:"Un enfant trop contrôlé n'ose plus expérimenter, se tromper ou prendre des initiatives — or c'est ainsi qu'on apprend." },
-      { arg:"Risque de créer de l'anxiété, de la peur de l'échec et de nuire à la confiance en soi", cn:"可能产生焦虑、对失败的恐惧，损害自信心", ex:"La peur constante de la punition nuit à l'épanouissement émotionnel et peut mener à des troubles psychologiques." },
-      { arg:"Peut provoquer des révoltes et des comportements opposés à l'adolescence", cn:"青春期可能引发反叛行为", ex:"Plus les règles sont rigides et perçues comme injustes, plus les adolescents cherchent à les contourner." },
+      { arg:"Peut entraver la créativité, l'expression personnelle et l'initiative", ex:"Un enfant trop contrôlé n'ose plus expérimenter, se tromper ou prendre des initiatives — or c'est ainsi qu'on apprend." },
+      { arg:"Risque de créer de l'anxiété, de la peur de l'échec et de nuire à la confiance en soi", ex:"La peur constante de la punition nuit à l'épanouissement émotionnel et peut mener à des troubles psychologiques." },
+      { arg:"Peut provoquer des révoltes et des comportements opposés à l'adolescence", ex:"Plus les règles sont rigides et perçues comme injustes, plus les adolescents cherchent à les contourner." },
     ],
   },
   { cat:'education',
     fr:"Faut-il faire beaucoup d'études pour réussir sa vie ?",
-    cn:"需要接受大量教育才能在生活中成功吗？",
     pour:[
-      { arg:"Développement intellectuel : pensée critique, capacité d'analyse et culture générale", cn:"智力发展：批判性思维、分析能力和常识", ex:"L'université ne forme pas seulement à un métier, elle forme à penser, à chercher, à remettre en question." },
-      { arg:"Opportunités professionnelles : accès à des postes qualifiés et meilleure rémunération", cn:"职业机会：获得高素质岗位和更高薪酬", ex:"En médecine, droit ou ingénierie, le diplôme est une condition légale et incontournable pour exercer." },
-      { arg:"Sécurité et stabilité financière à long terme, protection contre le chômage", cn:"长期财务安全稳定，防范失业风险", ex:"Les titulaires d'un master ont en moyenne un taux de chômage deux fois inférieur à ceux sans diplôme." },
-      { arg:"Culture et ouverture : compréhension du monde complexe et participation active à la société", cn:"文化与开放：理解复杂世界，积极参与社会", ex:"Les études développent l'empathie, l'esprit critique et la capacité à communiquer dans un monde globalisé." },
+      { arg:"Développement intellectuel : pensée critique, capacité d'analyse et culture générale", ex:"L'université ne forme pas seulement à un métier, elle forme à penser, à chercher, à remettre en question." },
+      { arg:"Opportunités professionnelles : accès à des postes qualifiés et meilleure rémunération", ex:"En médecine, droit ou ingénierie, le diplôme est une condition légale et incontournable pour exercer." },
+      { arg:"Sécurité et stabilité financière à long terme, protection contre le chômage", ex:"Les titulaires d'un master ont en moyenne un taux de chômage deux fois inférieur à ceux sans diplôme." },
+      { arg:"Culture et ouverture : compréhension du monde complexe et participation active à la société", ex:"Les études développent l'empathie, l'esprit critique et la capacité à communiquer dans un monde globalisé." },
     ],
     contre:[
-      { arg:"Expérience pratique et apprentissage sur le terrain parfois plus efficaces que les diplômes", cn:"实践经验和在岗学习有时比文凭更有效", ex:"Des métiers comme plombier, électricien ou cuisinier s'apprennent mieux par la pratique que par les livres." },
-      { arg:"Talents, passion et persévérance comme moteurs de réussite sans forcément de longues études", cn:"才华、热情和毅力是成功的动力，不一定需要长期学习", ex:"Bill Gates, Steve Jobs et de nombreux artistes ont réussi grâce à leur créativité, pas à leurs diplômes." },
-      { arg:"La formation professionnelle et l'apprentissage offrent des carrières tout aussi valorisées", cn:"职业培训和学徒制同样提供受重视的职业", ex:"Un chef étoilé, un artisan d'art ou un technicien spécialisé gagne souvent plus qu'un diplômé universitaire." },
+      { arg:"Expérience pratique et apprentissage sur le terrain parfois plus efficaces que les diplômes", ex:"Des métiers comme plombier, électricien ou cuisinier s'apprennent mieux par la pratique que par les livres." },
+      { arg:"Talents, passion et persévérance comme moteurs de réussite sans forcément de longues études", ex:"Bill Gates, Steve Jobs et de nombreux artistes ont réussi grâce à leur créativité, pas à leurs diplômes." },
+      { arg:"La formation professionnelle et l'apprentissage offrent des carrières tout aussi valorisées", ex:"Un chef étoilé, un artisan d'art ou un technicien spécialisé gagne souvent plus qu'un diplômé universitaire." },
     ],
   },
   { cat:'education',
     fr:"Faut-il commencer l'enseignement des langues étrangères dès le plus jeune âge ?",
-    cn:"应该从最小年龄开始教授外语吗？",
     pour:[
-      { arg:"Le cerveau des jeunes enfants est neuroplastique et absorbe les langues naturellement", cn:"幼儿大脑神经可塑性强，自然吸收语言", ex:"Avant 7 ans, les enfants acquièrent une prononciation quasi native sans effort conscient, contrairement aux adultes." },
-      { arg:"Avantages cognitifs du bilinguisme précoce : meilleure concentration, mémoire et flexibilité mentale", cn:"早期双语的认知优势：更好的专注力、记忆力和思维灵活性", ex:"Des recherches lient le bilinguisme précoce à un retard de l'apparition de maladies comme l'Alzheimer." },
-      { arg:"Développement linguistique : acquisition d'accent authentique et progression plus rapide", cn:"语言发展：获得真实口音，进步更快", ex:"Les enfants bilingues dès la petite enfance ont une prononciation bien supérieure à ceux qui commencent tard." },
-      { arg:"Ouverture culturelle et tolérance développées dès l'enfance", cn:"从童年培养文化开放性和宽容精神", ex:"Apprendre une langue, c'est aussi découvrir une culture, ce qui réduit naturellement les préjugés." },
+      { arg:"Le cerveau des jeunes enfants est neuroplastique et absorbe les langues naturellement", ex:"Avant 7 ans, les enfants acquièrent une prononciation quasi native sans effort conscient, contrairement aux adultes." },
+      { arg:"Avantages cognitifs du bilinguisme précoce : meilleure concentration, mémoire et flexibilité mentale", ex:"Des recherches lient le bilinguisme précoce à un retard de l'apparition de maladies comme l'Alzheimer." },
+      { arg:"Développement linguistique : acquisition d'accent authentique et progression plus rapide", ex:"Les enfants bilingues dès la petite enfance ont une prononciation bien supérieure à ceux qui commencent tard." },
+      { arg:"Ouverture culturelle et tolérance développées dès l'enfance", ex:"Apprendre une langue, c'est aussi découvrir une culture, ce qui réduit naturellement les préjugés." },
     ],
     contre:[
-      { arg:"La langue maternelle doit d'abord être solidement maîtrisée avant d'en ajouter une autre", cn:"必须先充分掌握母语，再引入另一种语言", ex:"Des enfants trop exposés tôt à deux langues sans soutien peuvent avoir du retard dans les deux langues." },
-      { arg:"La qualité de l'enseignant compte davantage que l'âge de début", cn:"教师质量比开始年龄更重要", ex:"Un excellent professeur passionné à 12 ans donne souvent de meilleurs résultats qu'un enseignant médiocre à 5 ans." },
-      { arg:"Manque de temps dans les programmes scolaires déjà chargés", cn:"已经繁重的学校课程中缺乏时间", ex:"Ajouter une langue dès la maternelle réduit le temps consacré aux matières fondamentales comme les maths et la lecture." },
+      { arg:"La langue maternelle doit d'abord être solidement maîtrisée avant d'en ajouter une autre", ex:"Des enfants trop exposés tôt à deux langues sans soutien peuvent avoir du retard dans les deux langues." },
+      { arg:"La qualité de l'enseignant compte davantage que l'âge de début", ex:"Un excellent professeur passionné à 12 ans donne souvent de meilleurs résultats qu'un enseignant médiocre à 5 ans." },
+      { arg:"Manque de temps dans les programmes scolaires déjà chargés", ex:"Ajouter une langue dès la maternelle réduit le temps consacré aux matières fondamentales comme les maths et la lecture." },
     ],
   },
   { cat:'education',
     fr:"Les sorties pédagogiques (musées, zoos, etc.) sont-elles bénéfiques pour les enfants ?",
-    cn:"参观博物馆、动物园等教育活动对孩子有益吗？",
     pour:[
-      { arg:"Apprentissage concret : passage de l'abstrait au concret, mémorisation renforcée", cn:"具体学习：从抽象到具体，记忆更深刻", ex:"Voir un squelette de T-Rex grandeur nature marque bien plus un enfant qu'une illustration dans un manuel scolaire." },
-      { arg:"Motivation et engagement : rupture avec la routine scolaire, éveil de la curiosité", cn:"动力与参与：打破学校常规，激发好奇心", ex:"Des études montrent que les élèves ayant visité un musée s'investissent davantage en classe pendant les semaines suivantes." },
-      { arg:"Ouverture culturelle : découverte du patrimoine, de l'art et de la biodiversité", cn:"文化开放：发现遗产、艺术和生物多样性", ex:"Une visite au zoo ou dans un parc naturel développe la sensibilité écologique dès le plus jeune âge." },
-      { arg:"Socialisation et développement personnel : travail en équipe, autonomie et esprit critique", cn:"社会化和个人发展：团队合作、自主性和批判性思维", ex:"Gérer un carnet de visite, observer et noter ses réflexions développent des compétences transversales essentielles." },
+      { arg:"Apprentissage concret : passage de l'abstrait au concret, mémorisation renforcée", ex:"Voir un squelette de T-Rex grandeur nature marque bien plus un enfant qu'une illustration dans un manuel scolaire." },
+      { arg:"Motivation et engagement : rupture avec la routine scolaire, éveil de la curiosité", ex:"Des études montrent que les élèves ayant visité un musée s'investissent davantage en classe pendant les semaines suivantes." },
+      { arg:"Ouverture culturelle : découverte du patrimoine, de l'art et de la biodiversité", ex:"Une visite au zoo ou dans un parc naturel développe la sensibilité écologique dès le plus jeune âge." },
+      { arg:"Socialisation et développement personnel : travail en équipe, autonomie et esprit critique", ex:"Gérer un carnet de visite, observer et noter ses réflexions développent des compétences transversales essentielles." },
     ],
     contre:[
-      { arg:"Coût élevé et source d'inégalités entre familles et établissements", cn:"成本高昂，在家庭和学校之间造成不平等", ex:"Les familles défavorisées ne peuvent parfois pas financer l'entrée ou le transport, ce qui marginalise certains élèves." },
-      { arg:"Organisation logistique complexe et chronophage pour les enseignants", cn:"组织后勤复杂耗时，对教师负担大", ex:"Encadrer une classe entière hors de l'école nécessite une préparation très lourde et mobilise beaucoup de ressources." },
+      { arg:"Coût élevé et source d'inégalités entre familles et établissements", ex:"Les familles défavorisées ne peuvent parfois pas financer l'entrée ou le transport, ce qui marginalise certains élèves." },
+      { arg:"Organisation logistique complexe et chronophage pour les enseignants", ex:"Encadrer une classe entière hors de l'école nécessite une préparation très lourde et mobilise beaucoup de ressources." },
     ],
   },
   { cat:'education',
     fr:"Les matières culturelles (musique, dessin, théâtre…) devraient-elles être enseignées à l'école ?",
-    cn:"音乐、绘画、戏剧等文化课程应该在学校教授吗？",
     pour:[
-      { arg:"Développement de la créativité : stimulation de l'imagination, de la pensée divergente et de l'originalité", cn:"创造力发展：激发想象力、发散性思维和原创性", ex:"Des études montrent que les élèves qui pratiquent la musique développent de meilleures capacités en mathématiques." },
-      { arg:"Développement émotionnel : gestion des émotions, confiance en soi et empathie", cn:"情感发展：情绪管理、自信心和同理心", ex:"Le théâtre aide les enfants timides à prendre la parole en public et à comprendre les émotions des autres." },
-      { arg:"Équilibre éducatif : complément aux matières académiques, réduction du stress scolaire", cn:"教育平衡：补充学术科目，减少学业压力", ex:"Les arts offrent une pause créative qui rend les enfants plus motivés et concentrés dans toutes les matières." },
-      { arg:"Découverte de talents et orientation professionnelle : révélation d'aptitudes cachées", cn:"发现才能和职业定向：揭示隐藏能力", ex:"Des élèves en difficulté scolaire s'épanouissent parfois dans les arts et y trouvent leur vocation." },
+      { arg:"Développement de la créativité : stimulation de l'imagination, de la pensée divergente et de l'originalité", ex:"Des études montrent que les élèves qui pratiquent la musique développent de meilleures capacités en mathématiques." },
+      { arg:"Développement émotionnel : gestion des émotions, confiance en soi et empathie", ex:"Le théâtre aide les enfants timides à prendre la parole en public et à comprendre les émotions des autres." },
+      { arg:"Équilibre éducatif : complément aux matières académiques, réduction du stress scolaire", ex:"Les arts offrent une pause créative qui rend les enfants plus motivés et concentrés dans toutes les matières." },
+      { arg:"Découverte de talents et orientation professionnelle : révélation d'aptitudes cachées", ex:"Des élèves en difficulté scolaire s'épanouissent parfois dans les arts et y trouvent leur vocation." },
     ],
     contre:[
-      { arg:"Les matières fondamentales (maths, langue) doivent rester prioritaires dans les programmes chargés", cn:"在繁重课程中，数学和语言等基础科目必须保持优先", ex:"Face aux évaluations nationales et aux exigences académiques, le temps consacré aux arts est souvent réduit en premier." },
-      { arg:"Manque d'enseignants qualifiés et de budgets dans de nombreux établissements", cn:"许多学校缺乏合格教师和资金", ex:"Un professeur de musique ou d'arts plastiques coûte cher et n'est pas disponible dans tous les établissements." },
+      { arg:"Les matières fondamentales (maths, langue) doivent rester prioritaires dans les programmes chargés", ex:"Face aux évaluations nationales et aux exigences académiques, le temps consacré aux arts est souvent réduit en premier." },
+      { arg:"Manque d'enseignants qualifiés et de budgets dans de nombreux établissements", ex:"Un professeur de musique ou d'arts plastiques coûte cher et n'est pas disponible dans tous les établissements." },
     ],
   },
   { cat:'education',
     fr:"Pensez-vous qu'il est facile de commencer ou de poursuivre des études après 30 ans ?",
-    cn:"您认为30岁后开始或继续学业容易吗？",
     pour:[
-      { arg:"Motivations et aspirations claires : évolution de carrière, passion, réalisation d'un rêve", cn:"明确的动力和愿望：职业发展、热情、实现梦想", ex:"Un adulte de 35 ans qui reprend des études sait exactement pourquoi il le fait et est bien plus motivé qu'à 18 ans." },
-      { arg:"Avantages de la maturité : expérience de vie, méthodes d'apprentissage efficaces, vision claire des objectifs", cn:"成熟优势：生活经验、有效学习方法、清晰目标", ex:"L'expérience professionnelle enrichit les cours : les adultes font des liens entre théorie et pratique que les jeunes n'ont pas." },
-      { arg:"Flexibilité des formations en ligne et des cours du soir adaptés aux adultes", cn:"在线课程和夜间课程的灵活性，适合成年人", ex:"Des plateformes comme Coursera ou des universités en présentiel offrent des horaires adaptés aux travailleurs." },
+      { arg:"Motivations et aspirations claires : évolution de carrière, passion, réalisation d'un rêve", ex:"Un adulte de 35 ans qui reprend des études sait exactement pourquoi il le fait et est bien plus motivé qu'à 18 ans." },
+      { arg:"Avantages de la maturité : expérience de vie, méthodes d'apprentissage efficaces, vision claire des objectifs", ex:"L'expérience professionnelle enrichit les cours : les adultes font des liens entre théorie et pratique que les jeunes n'ont pas." },
+      { arg:"Flexibilité des formations en ligne et des cours du soir adaptés aux adultes", ex:"Des plateformes comme Coursera ou des universités en présentiel offrent des horaires adaptés aux travailleurs." },
     ],
     contre:[
-      { arg:"Défis et obstacles : concilier études, travail et famille est très difficile", cn:"挑战与障碍：协调学习、工作和家庭非常困难", ex:"Un parent de 35 ans avec deux enfants et un emploi à temps plein dispose de très peu de temps pour étudier." },
-      { arg:"Contraintes financières : perdre un salaire ou financer des études est lourd", cn:"财务压力：失去收入或支付学费负担沉重", ex:"Repartir de zéro à 40 ans signifie souvent une baisse significative de revenus pendant plusieurs années." },
-      { arg:"Différence d'âge avec les autres étudiants et adaptation technologique parfois difficile", cn:"与其他学生的年龄差距，以及有时困难的技术适应", ex:"Certains adultes hésitent à reprendre des études de peur de ne pas suivre le rythme des jeunes étudiants." },
+      { arg:"Défis et obstacles : concilier études, travail et famille est très difficile", ex:"Un parent de 35 ans avec deux enfants et un emploi à temps plein dispose de très peu de temps pour étudier." },
+      { arg:"Contraintes financières : perdre un salaire ou financer des études est lourd", ex:"Repartir de zéro à 40 ans signifie souvent une baisse significative de revenus pendant plusieurs années." },
+      { arg:"Différence d'âge avec les autres étudiants et adaptation technologique parfois difficile", ex:"Certains adultes hésitent à reprendre des études de peur de ne pas suivre le rythme des jeunes étudiants." },
     ],
   },
 
   // ── LA PROFESSION ──
   { cat:'profession',
     fr:"Que pensez-vous de l'idée de travailler jusqu'à 70 ans ?",
-    cn:"您怎么看工作到70岁这个想法？",
     pour:[
-      { arg:"Expérience et sagesse : expertise accumulée, transmission aux jeunes, stabilité professionnelle", cn:"经验与智慧：积累的专业知识，传承给年轻人，职业稳定性", ex:"Des médecins, professeurs ou artisans transmettent un savoir irremplaçable que les jeunes n'ont pas encore." },
-      { arg:"Nécessité économique : équilibre des systèmes de retraite face au vieillissement de la population", cn:"经济必要性：应对人口老龄化，维持退休制度平衡", ex:"Avec moins de jeunes actifs cotisants, reculer l'âge de la retraite devient inévitable pour préserver les pensions." },
-      { arg:"Maintien de l'activité intellectuelle, prévention de l'isolement social et sentiment d'utilité", cn:"保持智力活动，预防社会孤立，维持价值感", ex:"Des études montrent que les seniors qui restent actifs professionnellement vieillissent mieux physiquement et mentalement." },
+      { arg:"Expérience et sagesse : expertise accumulée, transmission aux jeunes, stabilité professionnelle", ex:"Des médecins, professeurs ou artisans transmettent un savoir irremplaçable que les jeunes n'ont pas encore." },
+      { arg:"Nécessité économique : équilibre des systèmes de retraite face au vieillissement de la population", ex:"Avec moins de jeunes actifs cotisants, reculer l'âge de la retraite devient inévitable pour préserver les pensions." },
+      { arg:"Maintien de l'activité intellectuelle, prévention de l'isolement social et sentiment d'utilité", ex:"Des études montrent que les seniors qui restent actifs professionnellement vieillissent mieux physiquement et mentalement." },
     ],
     contre:[
-      { arg:"Fatigue et usure physique : la santé ne permet pas toujours de travailler jusqu'à 70 ans", cn:"疲劳与身体磨损：健康状况不一定能支撑到70岁", ex:"Les métiers physiques — maçon, infirmier, ouvrier — usent le corps bien avant 70 ans." },
-      { arg:"Place pour les jeunes : blocage des opportunités d'emploi et ralentissement du renouvellement", cn:"给年轻人让位：阻碍就业机会和人才更新", ex:"Si les seniors gardent leur poste plus longtemps, les jeunes diplômés trouvent encore plus difficilement leur premier emploi." },
-      { arg:"Inégalités : injustice pour ceux qui ont commencé à travailler tôt avec des métiers pénibles", cn:"不平等：对早年从事体力劳动者不公平", ex:"Un ouvrier ayant commencé à 18 ans aurait travaillé 52 ans — bien plus qu'un cadre ayant débuté à 28 ans." },
+      { arg:"Fatigue et usure physique : la santé ne permet pas toujours de travailler jusqu'à 70 ans", ex:"Les métiers physiques — maçon, infirmier, ouvrier — usent le corps bien avant 70 ans." },
+      { arg:"Place pour les jeunes : blocage des opportunités d'emploi et ralentissement du renouvellement", ex:"Si les seniors gardent leur poste plus longtemps, les jeunes diplômés trouvent encore plus difficilement leur premier emploi." },
+      { arg:"Inégalités : injustice pour ceux qui ont commencé à travailler tôt avec des métiers pénibles", ex:"Un ouvrier ayant commencé à 18 ans aurait travaillé 52 ans — bien plus qu'un cadre ayant débuté à 28 ans." },
     ],
   },
   { cat:'profession',
     fr:"Faut-il autoriser la sieste sur le lieu de travail ? Pourquoi ?",
-    cn:"应该允许在工作场所午睡吗？为什么？",
     pour:[
-      { arg:"Productivité et performance : amélioration de la concentration et réduction des erreurs", cn:"生产力与绩效：提升专注力，减少错误", ex:"La NASA a prouvé qu'une sieste de 26 minutes améliore les performances cognitives de 34 % et la vigilance de 100 %." },
-      { arg:"Bien-être et santé : réduction du stress, amélioration de l'humeur et prévention de l'épuisement", cn:"健康与幸福：减少压力、改善情绪、预防精力耗尽", ex:"Des entreprises comme Google ou Nike ont installé des capsules de sieste dans leurs bureaux avec des résultats très positifs." },
-      { arg:"Sécurité au travail : réduction des accidents liés à la somnolence et à la fatigue", cn:"工作安全：减少因嗜睡和疲劳引起的事故", ex:"La somnolence est responsable de nombreux accidents industriels — une sieste courte peut sauver des vies." },
+      { arg:"Productivité et performance : amélioration de la concentration et réduction des erreurs", ex:"La NASA a prouvé qu'une sieste de 26 minutes améliore les performances cognitives de 34 % et la vigilance de 100 %." },
+      { arg:"Bien-être et santé : réduction du stress, amélioration de l'humeur et prévention de l'épuisement", ex:"Des entreprises comme Google ou Nike ont installé des capsules de sieste dans leurs bureaux avec des résultats très positifs." },
+      { arg:"Sécurité au travail : réduction des accidents liés à la somnolence et à la fatigue", ex:"La somnolence est responsable de nombreux accidents industriels — une sieste courte peut sauver des vies." },
     ],
     contre:[
-      { arg:"Impossibilité logistique dans de nombreux secteurs (restauration, hôpital, chantier)", cn:"在许多行业（餐饮、医院、工地）后勤上不可行", ex:"Un serveur, un chirurgien ou un ouvrier en pleine activité ne peut pas s'arrêter vingt minutes pour dormir." },
-      { arg:"Inégalités entre postes : les cadres en bureau peuvent faire une sieste, pas les employés en contact client", cn:"岗位间不平等：办公室白领可以午睡，但客户接待员工不行", ex:"Ce privilège, accordé à certains et pas à d'autres, crée des tensions et un sentiment d'injustice dans l'entreprise." },
-      { arg:"Résistance culturelle : dans beaucoup de pays, dormir au travail est perçu comme un manque de professionnalisme", cn:"文化阻力：在许多国家，工作时睡觉被视为不专业", ex:"Les employés eux-mêmes peuvent hésiter à faire une sieste par crainte du jugement de leurs collègues ou supérieurs." },
+      { arg:"Impossibilité logistique dans de nombreux secteurs (restauration, hôpital, chantier)", ex:"Un serveur, un chirurgien ou un ouvrier en pleine activité ne peut pas s'arrêter vingt minutes pour dormir." },
+      { arg:"Inégalités entre postes : les cadres en bureau peuvent faire une sieste, pas les employés en contact client", ex:"Ce privilège, accordé à certains et pas à d'autres, crée des tensions et un sentiment d'injustice dans l'entreprise." },
+      { arg:"Résistance culturelle : dans beaucoup de pays, dormir au travail est perçu comme un manque de professionnalisme", ex:"Les employés eux-mêmes peuvent hésiter à faire une sieste par crainte du jugement de leurs collègues ou supérieurs." },
     ],
   },
   { cat:'profession',
     fr:"Le télétravail permet-il un bon équilibre entre vie professionnelle et vie personnelle ?",
-    cn:"远程办公能否实现工作与个人生活的良好平衡？",
     pour:[
-      { arg:"Suppression du temps de trajet : gain de temps précieux chaque jour pour la famille et les loisirs", cn:"消除通勤时间：每天为家庭和休闲节省宝贵时间", ex:"En économisant une heure de transport par jour, on récupère cinq heures par semaine — presque une demi-journée." },
-      { arg:"Flexibilité des horaires bénéfique pour les parents, aidants et personnes ayant des contraintes", cn:"灵活的工作时间有益于父母、照护者和有约束的人", ex:"Un parent peut s'organiser pour accompagner son enfant chez le médecin sans demander de congé." },
-      { arg:"Réduction des coûts (transport, restauration) et meilleure concentration pour certains profils", cn:"降低费用（交通、餐饮），部分人专注度更高", ex:"Travailler dans un environnement calme chez soi peut être bien plus productif qu'un open space bruyant." },
+      { arg:"Suppression du temps de trajet : gain de temps précieux chaque jour pour la famille et les loisirs", ex:"En économisant une heure de transport par jour, on récupère cinq heures par semaine — presque une demi-journée." },
+      { arg:"Flexibilité des horaires bénéfique pour les parents, aidants et personnes ayant des contraintes", ex:"Un parent peut s'organiser pour accompagner son enfant chez le médecin sans demander de congé." },
+      { arg:"Réduction des coûts (transport, restauration) et meilleure concentration pour certains profils", ex:"Travailler dans un environnement calme chez soi peut être bien plus productif qu'un open space bruyant." },
     ],
     contre:[
-      { arg:"Difficultés à séparer travail et vie privée : difficulté à 'déconnecter' mentalement", cn:"难以区分工作和私生活：难以从心理上'断线'", ex:"Quand le bureau est dans le salon, il est très difficile de s'arrêter de travailler à une heure raisonnable." },
-      { arg:"Isolement social et perte du lien d'équipe pouvant mener à la démotivation et à l'anxiété", cn:"社会孤立和失去团队联系，可能导致动力下降和焦虑", ex:"Sans interactions humaines régulières, certains télétravailleurs développent un sentiment de solitude profonde." },
-      { arg:"Pas adapté à tous les espaces de vie ni à tous les profils (besoin de présence, de structure)", cn:"不适合所有居住空间和所有人（需要存在感、结构感）", ex:"Dans un appartement partagé avec des enfants ou des colocataires, travailler chez soi peut être source de stress." },
+      { arg:"Difficultés à séparer travail et vie privée : difficulté à 'déconnecter' mentalement", ex:"Quand le bureau est dans le salon, il est très difficile de s'arrêter de travailler à une heure raisonnable." },
+      { arg:"Isolement social et perte du lien d'équipe pouvant mener à la démotivation et à l'anxiété", ex:"Sans interactions humaines régulières, certains télétravailleurs développent un sentiment de solitude profonde." },
+      { arg:"Pas adapté à tous les espaces de vie ni à tous les profils (besoin de présence, de structure)", ex:"Dans un appartement partagé avec des enfants ou des colocataires, travailler chez soi peut être source de stress." },
     ],
   },
   { cat:'profession',
     fr:"La chose la plus importante dans un travail est le salaire. Qu'en pensez-vous ?",
-    cn:"工作中最重要的是薪水。您怎么看？",
     pour:[
-      { arg:"Le salaire est la base de la sécurité matérielle et du bien-être de toute la famille", cn:"薪水是整个家庭物质安全和幸福的基础", ex:"Sans un revenu suffisant, il est impossible de se loger, de se nourrir correctement et d'assurer l'avenir de ses enfants." },
-      { arg:"Reconnaissance financière de l'effort, des compétences et de l'engagement au travail", cn:"对工作努力、技能和投入的经济认可", ex:"Un bon salaire envoie un signal clair : l'employeur valorise réellement la contribution de son collaborateur." },
-      { arg:"Indépendance financière permettant de faire des choix de vie librement", cn:"财务独立，让人自由做生活选择", ex:"Gagner suffisamment permet de choisir son quartier, ses loisirs et même de se permettre de quitter un emploi toxique." },
+      { arg:"Le salaire est la base de la sécurité matérielle et du bien-être de toute la famille", ex:"Sans un revenu suffisant, il est impossible de se loger, de se nourrir correctement et d'assurer l'avenir de ses enfants." },
+      { arg:"Reconnaissance financière de l'effort, des compétences et de l'engagement au travail", ex:"Un bon salaire envoie un signal clair : l'employeur valorise réellement la contribution de son collaborateur." },
+      { arg:"Indépendance financière permettant de faire des choix de vie librement", ex:"Gagner suffisamment permet de choisir son quartier, ses loisirs et même de se permettre de quitter un emploi toxique." },
     ],
     contre:[
-      { arg:"Le sens du travail, l'épanouissement personnel et la qualité des relations comptent autant", cn:"工作的意义、个人成就感和人际关系质量同样重要", ex:"Des études montrent que les gens qui aiment leur travail sont plus productifs, plus créatifs et moins malades." },
-      { arg:"Les conditions de travail, l'ambiance et la flexibilité sont souvent des facteurs décisifs", cn:"工作条件、氛围和灵活性往往是决定性因素", ex:"Un manager toxique ou des horaires impossibles gâchent même le poste le mieux rémunéré." },
-      { arg:"La sécurité de l'emploi, les avantages sociaux et la formation représentent une valeur économique réelle", cn:"就业保障、社会福利和培训具有真实的经济价值", ex:"Une retraite correcte, une assurance santé et des congés payés généreux valent parfois plus qu'une prime." },
+      { arg:"Le sens du travail, l'épanouissement personnel et la qualité des relations comptent autant", ex:"Des études montrent que les gens qui aiment leur travail sont plus productifs, plus créatifs et moins malades." },
+      { arg:"Les conditions de travail, l'ambiance et la flexibilité sont souvent des facteurs décisifs", ex:"Un manager toxique ou des horaires impossibles gâchent même le poste le mieux rémunéré." },
+      { arg:"La sécurité de l'emploi, les avantages sociaux et la formation représentent une valeur économique réelle", ex:"Une retraite correcte, une assurance santé et des congés payés généreux valent parfois plus qu'une prime." },
     ],
   },
   { cat:'profession',
     fr:"Que pensez-vous du fait de changer de carrière à tout âge ?",
-    cn:"您怎么看在任何年龄改变职业生涯？",
     pour:[
-      { arg:"Épanouissement personnel : suivre ses passions, retrouver la motivation et se réaliser", cn:"个人成就：追随热情，重拾动力，实现自我", ex:"De nombreuses personnes reconverties témoignent d'une satisfaction professionnelle bien supérieure après leur changement de cap." },
-      { arg:"Acquisition de nouvelles compétences et enrichissement de l'expérience professionnelle", cn:"获得新技能，丰富职业经验", ex:"Un manager reconverti dans l'enseignement apporte un regard pratique inestimable que les jeunes diplômés n'ont pas." },
-      { arg:"Évolution du marché du travail : nouvelles opportunités, flexibilité valorisée, économie numérique", cn:"劳动力市场演变：新机遇、灵活性受重视、数字经济", ex:"Des secteurs entiers (cybersécurité, intelligence artificielle) manquent de talents et accueillent les reconversions." },
+      { arg:"Épanouissement personnel : suivre ses passions, retrouver la motivation et se réaliser", ex:"De nombreuses personnes reconverties témoignent d'une satisfaction professionnelle bien supérieure après leur changement de cap." },
+      { arg:"Acquisition de nouvelles compétences et enrichissement de l'expérience professionnelle", ex:"Un manager reconverti dans l'enseignement apporte un regard pratique inestimable que les jeunes diplômés n'ont pas." },
+      { arg:"Évolution du marché du travail : nouvelles opportunités, flexibilité valorisée, économie numérique", ex:"Des secteurs entiers (cybersécurité, intelligence artificielle) manquent de talents et accueillent les reconversions." },
     ],
     contre:[
-      { arg:"Défis financiers : perte de statut, baisse de revenus pendant la transition et formation coûteuse", cn:"财务挑战：地位下降、过渡期收入减少、培训费用高", ex:"Repartir de zéro à 45 ans signifie souvent accepter un salaire de débutant pendant plusieurs années." },
-      { arg:"Discrimination liée à l'âge : certains employeurs préfèrent des profils plus jeunes", cn:"年龄歧视：一些雇主更喜欢年轻的候选人", ex:"Malgré les lois anti-discrimination, les candidats de plus de 50 ans font face à des biais conscients ou inconscients." },
-      { arg:"Concurrence avec les jeunes diplômés et difficultés d'adaptation technologique", cn:"与年轻毕业生的竞争以及技术适应困难", ex:"Dans certains secteurs très techniques, il est difficile de rattraper des jeunes formés aux dernières technologies." },
+      { arg:"Défis financiers : perte de statut, baisse de revenus pendant la transition et formation coûteuse", ex:"Repartir de zéro à 45 ans signifie souvent accepter un salaire de débutant pendant plusieurs années." },
+      { arg:"Discrimination liée à l'âge : certains employeurs préfèrent des profils plus jeunes", ex:"Malgré les lois anti-discrimination, les candidats de plus de 50 ans font face à des biais conscients ou inconscients." },
+      { arg:"Concurrence avec les jeunes diplômés et difficultés d'adaptation technologique", ex:"Dans certains secteurs très techniques, il est difficile de rattraper des jeunes formés aux dernières technologies." },
     ],
   },
 
   // ── LA FAMILLE ──
   { cat:'famille',
     fr:"Les membres de notre famille peuvent-ils être considérés comme nos meilleurs amis ?",
-    cn:"家人可以成为我们最好的朋友吗？",
     pour:[
-      { arg:"Liens inconditionnels : amour, acceptation malgré les défauts et loyauté à toute épreuve", cn:"无条件纽带：爱、接受缺点和不可动摇的忠诚", ex:"On sait que la famille sera là dans les moments les plus difficiles — une certitude que peu d'amis peuvent offrir." },
-      { arg:"Durabilité des relations : partage d'une histoire commune, souvenirs d'enfance et traditions", cn:"关系的持久性：共同历史、童年记忆和传统", ex:"Grandir ensemble crée des souvenirs et des références partagées qu'aucune amitié ultérieure ne peut reproduire." },
-      { arg:"Connaissance mutuelle profonde : compréhension des réactions, des humeurs et des valeurs", cn:"深刻的相互了解：理解彼此的反应、情绪和价值观", ex:"Un frère ou une sœur vous connaît depuis l'enfance et peut vous donner des conseils d'une précision unique." },
-      { arg:"Soutien mutuel : aide inconditionnelle, solidarité familiale naturelle et entraide pratique", cn:"相互支持：无条件帮助、自然的家庭团结和实际互助", ex:"En cas de maladie, de chômage ou de deuil, la famille offre un soutien matériel et émotionnel inégalé." },
+      { arg:"Liens inconditionnels : amour, acceptation malgré les défauts et loyauté à toute épreuve", ex:"On sait que la famille sera là dans les moments les plus difficiles — une certitude que peu d'amis peuvent offrir." },
+      { arg:"Durabilité des relations : partage d'une histoire commune, souvenirs d'enfance et traditions", ex:"Grandir ensemble crée des souvenirs et des références partagées qu'aucune amitié ultérieure ne peut reproduire." },
+      { arg:"Connaissance mutuelle profonde : compréhension des réactions, des humeurs et des valeurs", ex:"Un frère ou une sœur vous connaît depuis l'enfance et peut vous donner des conseils d'une précision unique." },
+      { arg:"Soutien mutuel : aide inconditionnelle, solidarité familiale naturelle et entraide pratique", ex:"En cas de maladie, de chômage ou de deuil, la famille offre un soutien matériel et émotionnel inégalé." },
     ],
     contre:[
-      { arg:"Limites et nuances : différences générationnelles, obligations vs choix libre d'amitié", cn:"局限与细微差别：代际差异、义务与自由选择的友谊", ex:"On ne choisit pas sa famille — les conflits de valeurs ou les rancœurs anciennes peuvent rendre les relations difficiles." },
-      { arg:"Conflits familiaux durables : héritages, jalousies d'enfance, pression et attentes excessives", cn:"持久的家庭冲突：遗产、童年嫉妒、过度压力和期望", ex:"Des litiges familiaux peuvent empoisonner les relations pendant des décennies, ce qui n'arrive pas avec les amis." },
-      { arg:"Manque de distance objective et de liberté dans les échanges par rapport à l'amitié choisie", cn:"与所选友谊相比，缺乏客观距离和交流自由", ex:"Avec un ami, on partage librement ses doutes et erreurs ; avec la famille, on filtre souvent par peur du jugement." },
+      { arg:"Limites et nuances : différences générationnelles, obligations vs choix libre d'amitié", ex:"On ne choisit pas sa famille — les conflits de valeurs ou les rancœurs anciennes peuvent rendre les relations difficiles." },
+      { arg:"Conflits familiaux durables : héritages, jalousies d'enfance, pression et attentes excessives", ex:"Des litiges familiaux peuvent empoisonner les relations pendant des décennies, ce qui n'arrive pas avec les amis." },
+      { arg:"Manque de distance objective et de liberté dans les échanges par rapport à l'amitié choisie", ex:"Avec un ami, on partage librement ses doutes et erreurs ; avec la famille, on filtre souvent par peur du jugement." },
     ],
   },
   { cat:'famille',
     fr:"Il est plus facile de vivre seul(e) qu'en famille. Qu'en pensez-vous ?",
-    cn:"独居比家庭生活更轻松吗？",
     pour:[
-      { arg:"Liberté totale dans l'organisation du quotidien : horaires, repas, bruit, mode de vie", cn:"日常安排完全自由：作息、饮食、噪音、生活方式", ex:"Pas de compromis, pas de négociation permanente — on décide seul de tout ce qui concerne son espace de vie." },
-      { arg:"Développement de l'autonomie et de la connaissance de soi", cn:"培养自主性和自我认知", ex:"Vivre seul oblige à faire face à ses propres besoins, ses peurs et ses faiblesses — une expérience formative." },
-      { arg:"Absence de conflits domestiques : pas de disputes sur le ménage, les finances ou les décisions", cn:"没有家庭冲突：不争论家务、财务或决策", ex:"La paix du foyer est constante quand on vit seul — une ressource précieuse pour la santé mentale." },
+      { arg:"Liberté totale dans l'organisation du quotidien : horaires, repas, bruit, mode de vie", ex:"Pas de compromis, pas de négociation permanente — on décide seul de tout ce qui concerne son espace de vie." },
+      { arg:"Développement de l'autonomie et de la connaissance de soi", ex:"Vivre seul oblige à faire face à ses propres besoins, ses peurs et ses faiblesses — une expérience formative." },
+      { arg:"Absence de conflits domestiques : pas de disputes sur le ménage, les finances ou les décisions", ex:"La paix du foyer est constante quand on vit seul — une ressource précieuse pour la santé mentale." },
     ],
     contre:[
-      { arg:"La solitude prolongée peut devenir pesante et nuire à la santé mentale", cn:"长期孤独可能变得沉重，损害心理健康", ex:"Les personnes seules sont statistiquement plus exposées à la dépression, à l'anxiété et aux maladies cardiovasculaires." },
-      { arg:"La vie de famille apporte un soutien émotionnel et pratique incomparable", cn:"家庭生活提供无与伦比的情感和实际支持", ex:"En cas de maladie, de perte d'emploi ou de chagrin, avoir des proches autour de soi est absolument précieux." },
-      { arg:"Coût financier plus élevé : loyer, courses et factures non partagés", cn:"经济成本更高：房租、购物和账单不共摊", ex:"Vivre seul revient environ deux fois plus cher par personne que de cohabiter — un facteur décisif avec les loyers actuels." },
+      { arg:"La solitude prolongée peut devenir pesante et nuire à la santé mentale", ex:"Les personnes seules sont statistiquement plus exposées à la dépression, à l'anxiété et aux maladies cardiovasculaires." },
+      { arg:"La vie de famille apporte un soutien émotionnel et pratique incomparable", ex:"En cas de maladie, de perte d'emploi ou de chagrin, avoir des proches autour de soi est absolument précieux." },
+      { arg:"Coût financier plus élevé : loyer, courses et factures non partagés", ex:"Vivre seul revient environ deux fois plus cher par personne que de cohabiter — un facteur décisif avec les loyers actuels." },
     ],
   },
   { cat:'famille',
     fr:"Les parents devraient-ils contrôler les fréquentations de leurs enfants ?",
-    cn:"父母应该控制孩子的交往对象吗？",
     pour:[
-      { arg:"Protection et sécurité : protéger contre les mauvaises influences, la délinquance et les dangers", cn:"保护与安全：防止不良影响、犯罪和危险", ex:"Des études montrent que les fréquentations d'adolescence influencent fortement les comportements à risque comme la drogue." },
-      { arg:"Transmission des valeurs familiales et éducation du discernement", cn:"传承家庭价值观，培养辨别能力", ex:"Les parents ont la responsabilité d'aider leurs enfants à choisir des fréquentations qui correspondent à leurs valeurs." },
-      { arg:"Surveillance des risques numériques et des réseaux sociaux", cn:"监控数字风险和社交网络", ex:"Sur Internet, les prédateurs et les mauvaises influences sont nombreux — un contrôle parental est essentiel." },
+      { arg:"Protection et sécurité : protéger contre les mauvaises influences, la délinquance et les dangers", ex:"Des études montrent que les fréquentations d'adolescence influencent fortement les comportements à risque comme la drogue." },
+      { arg:"Transmission des valeurs familiales et éducation du discernement", ex:"Les parents ont la responsabilité d'aider leurs enfants à choisir des fréquentations qui correspondent à leurs valeurs." },
+      { arg:"Surveillance des risques numériques et des réseaux sociaux", ex:"Sur Internet, les prédateurs et les mauvaises influences sont nombreux — un contrôle parental est essentiel." },
     ],
     contre:[
-      { arg:"Le contrôle excessif nuit à l'autonomie, à la confiance en soi et à la prise de décision", cn:"过度控制损害自主性、自信心和决策能力", ex:"Un adolescent trop surveillé ne développe pas sa capacité à évaluer lui-même les risques et à faire ses propres choix." },
-      { arg:"Peut créer une relation de méfiance et pousser l'enfant à cacher ses fréquentations", cn:"可能造成不信任关系，促使孩子隐瞒交往对象", ex:"Plus on interdit, plus les ados cachent — le contrôle excessif produit souvent l'effet inverse à celui recherché." },
-      { arg:"Le dialogue et l'éducation au discernement sont plus efficaces que le contrôle autoritaire", cn:"对话和培养辨别能力比权威控制更有效", ex:"Un enfant qui comprend pourquoi certaines fréquentations sont mauvaises fait de meilleurs choix qu'un enfant qui obéit sans comprendre." },
+      { arg:"Le contrôle excessif nuit à l'autonomie, à la confiance en soi et à la prise de décision", ex:"Un adolescent trop surveillé ne développe pas sa capacité à évaluer lui-même les risques et à faire ses propres choix." },
+      { arg:"Peut créer une relation de méfiance et pousser l'enfant à cacher ses fréquentations", ex:"Plus on interdit, plus les ados cachent — le contrôle excessif produit souvent l'effet inverse à celui recherché." },
+      { arg:"Le dialogue et l'éducation au discernement sont plus efficaces que le contrôle autoritaire", ex:"Un enfant qui comprend pourquoi certaines fréquentations sont mauvaises fait de meilleurs choix qu'un enfant qui obéit sans comprendre." },
     ],
   },
   { cat:'famille',
     fr:"Pensez-vous qu'il est important d'écouter les conseils des personnes âgées ?",
-    cn:"您认为听取老年人的建议重要吗？",
     pour:[
-      { arg:"Sagesse et expérience : années de vie accumulées, leçons tirées des erreurs et recul sur les situations", cn:"智慧与经验：积累多年的生活，从错误中汲取教训，对事情有更清晰的看法", ex:"Une personne de 70 ans a traversé des crises, des deuils et des épreuves qui lui donnent une vision précieuse de la vie." },
-      { arg:"Perspective historique : témoins des évolutions sociales, transmission de la mémoire collective", cn:"历史视角：社会变迁的见证者，传承集体记忆", ex:"Les seniors ont vécu des révolutions technologiques, politiques et sociales qui enrichissent considérablement leur jugement." },
-      { arg:"Éviter les erreurs du passé : conseils préventifs, économie de temps et d'énergie", cn:"避免过去的错误：预防性建议，节省时间和精力", ex:"Apprendre des erreurs des autres plutôt que de les reproduire soi-même est une forme d'intelligence précieuse." },
-      { arg:"Liens familiaux renforcés et transmission des valeurs intergénérationnelles", cn:"加强家庭纽带，传承代际价值观", ex:"Écouter ses grands-parents crée des moments d'échange privilégiés et préserve une mémoire familiale irremplaçable." },
+      { arg:"Sagesse et expérience : années de vie accumulées, leçons tirées des erreurs et recul sur les situations", ex:"Une personne de 70 ans a traversé des crises, des deuils et des épreuves qui lui donnent une vision précieuse de la vie." },
+      { arg:"Perspective historique : témoins des évolutions sociales, transmission de la mémoire collective", ex:"Les seniors ont vécu des révolutions technologiques, politiques et sociales qui enrichissent considérablement leur jugement." },
+      { arg:"Éviter les erreurs du passé : conseils préventifs, économie de temps et d'énergie", ex:"Apprendre des erreurs des autres plutôt que de les reproduire soi-même est une forme d'intelligence précieuse." },
+      { arg:"Liens familiaux renforcés et transmission des valeurs intergénérationnelles", ex:"Écouter ses grands-parents crée des moments d'échange privilégiés et préserve une mémoire familiale irremplaçable." },
     ],
     contre:[
-      { arg:"Le monde a tellement changé que certains conseils des aînés ne sont plus adaptés au contexte actuel", cn:"世界变化太大，老一辈的一些建议不再适合当今背景", ex:"Des conseils sur le mariage, la carrière ou la technologie donnés il y a 40 ans ne correspondent plus aux réalités modernes." },
-      { arg:"Chaque individu doit construire son propre parcours et apprendre de ses propres expériences", cn:"每个人必须构建自己的人生道路，从自己的经历中学习", ex:"Trop écouter les autres peut empêcher de prendre ses propres risques et d'explorer des voies originales et créatives." },
+      { arg:"Le monde a tellement changé que certains conseils des aînés ne sont plus adaptés au contexte actuel", ex:"Des conseils sur le mariage, la carrière ou la technologie donnés il y a 40 ans ne correspondent plus aux réalités modernes." },
+      { arg:"Chaque individu doit construire son propre parcours et apprendre de ses propres expériences", ex:"Trop écouter les autres peut empêcher de prendre ses propres risques et d'explorer des voies originales et créatives." },
     ],
   },
 
   // ── LA TECHNOLOGIE ──
   { cat:'tech',
     fr:"De nos jours, il est impossible de vivre sans Internet. Qu'en pensez-vous ?",
-    cn:"如今没有互联网就无法生活。您怎么看？",
     pour:[
-      { arg:"Internet est indispensable pour le travail, les démarches administratives et l'accès aux services", cn:"互联网对工作、行政事务和获取服务不可或缺", ex:"Impôts en ligne, téléconsultations médicales, candidatures d'emploi — tout passe désormais par une connexion Internet." },
-      { arg:"Source incontournable d'information, d'éducation et de connexion sociale mondiale", cn:"信息、教育和全球社交联系不可或缺的来源", ex:"Durant la pandémie, des millions d'élèves ont maintenu leur scolarité uniquement grâce à Internet." },
-      { arg:"Transformation profonde de tous les secteurs : économie, médecine, culture, relations sociales", cn:"深刻改变所有领域：经济、医学、文化、社会关系", ex:"L'intelligence artificielle, le e-commerce et les médias numériques ont révolutionné la façon de travailler et consommer." },
+      { arg:"Internet est indispensable pour le travail, les démarches administratives et l'accès aux services", ex:"Impôts en ligne, téléconsultations médicales, candidatures d'emploi — tout passe désormais par une connexion Internet." },
+      { arg:"Source incontournable d'information, d'éducation et de connexion sociale mondiale", ex:"Durant la pandémie, des millions d'élèves ont maintenu leur scolarité uniquement grâce à Internet." },
+      { arg:"Transformation profonde de tous les secteurs : économie, médecine, culture, relations sociales", ex:"L'intelligence artificielle, le e-commerce et les médias numériques ont révolutionné la façon de travailler et consommer." },
     ],
     contre:[
-      { arg:"Des millions de personnes vivent encore sans Internet et mènent une vie épanouie", cn:"数百万人仍然没有互联网，过着充实的生活", ex:"Des communautés rurales isolées ou des personnes âgées prouvent chaque jour que c'est encore possible." },
-      { arg:"L'hyper-connexion crée des dépendances réelles et des problèmes de santé mentale documentés", cn:"过度连接产生真实的依赖性和有记录的心理健康问题", ex:"Les symptômes de sevrage liés à l'addiction aux réseaux sociaux sont reconnus par les psychiatres." },
-      { arg:"Risques pour la vie privée, la sécurité des données et la désinformation massive", cn:"对隐私、数据安全和大规模虚假信息的风险", ex:"Nos données personnelles sont collectées, vendues et utilisées à notre insu par des entreprises et des gouvernements." },
+      { arg:"Des millions de personnes vivent encore sans Internet et mènent une vie épanouie", ex:"Des communautés rurales isolées ou des personnes âgées prouvent chaque jour que c'est encore possible." },
+      { arg:"L'hyper-connexion crée des dépendances réelles et des problèmes de santé mentale documentés", ex:"Les symptômes de sevrage liés à l'addiction aux réseaux sociaux sont reconnus par les psychiatres." },
+      { arg:"Risques pour la vie privée, la sécurité des données et la désinformation massive", ex:"Nos données personnelles sont collectées, vendues et utilisées à notre insu par des entreprises et des gouvernements." },
     ],
   },
   { cat:'tech',
     fr:"Faut-il interdire aux enfants l'accès aux écrans (télévision, portable, ordinateur…) ?",
-    cn:"应该禁止儿童使用屏幕（电视、手机、电脑等）吗？",
     pour:[
-      { arg:"Risques pour le développement : addiction, troubles du sommeil, problèmes de concentration et de langage", cn:"发展风险：成瘾、睡眠障碍、注意力和语言问题", ex:"L'OMS recommande aucun écran avant 2 ans et un maximum d'une heure par jour entre 2 et 5 ans." },
-      { arg:"Exposition à des contenus inappropriés, au cyberharcèlement et aux prédateurs en ligne", cn:"接触不适当内容、网络欺凌和网络捕食者", ex:"Sans contrôle parental, des enfants peuvent accéder à de la violence, de la pornographie ou des idéologies extrémistes." },
-      { arg:"Sédentarité et réduction du temps consacré au jeu, à la lecture et aux activités physiques", cn:"久坐和减少游戏、阅读和体育活动的时间", ex:"Chaque heure passée devant un écran remplace une heure d'activité physique, de lecture ou d'interactions sociales réelles." },
+      { arg:"Risques pour le développement : addiction, troubles du sommeil, problèmes de concentration et de langage", ex:"L'OMS recommande aucun écran avant 2 ans et un maximum d'une heure par jour entre 2 et 5 ans." },
+      { arg:"Exposition à des contenus inappropriés, au cyberharcèlement et aux prédateurs en ligne", ex:"Sans contrôle parental, des enfants peuvent accéder à de la violence, de la pornographie ou des idéologies extrémistes." },
+      { arg:"Sédentarité et réduction du temps consacré au jeu, à la lecture et aux activités physiques", ex:"Chaque heure passée devant un écran remplace une heure d'activité physique, de lecture ou d'interactions sociales réelles." },
     ],
     contre:[
-      { arg:"Les outils numériques éducatifs développent des compétences clés pour l'avenir", cn:"教育数字工具培养未来的关键能力", ex:"Des applications comme Duolingo, Khan Academy ou les jeux de programmation offrent un apprentissage ludique et efficace." },
-      { arg:"La maîtrise du numérique est une compétence essentielle dans la société moderne", cn:"掌握数字技术是现代社会的基本技能", ex:"Savoir utiliser un ordinateur, coder ou créer du contenu multimédia est aussi important que lire et écrire aujourd'hui." },
-      { arg:"Interdire totalement crée une frustration contre-productive et une méconnaissance du numérique", cn:"完全禁止会适得其反，造成对数字世界的无知", ex:"Mieux vaut accompagner et réguler l'usage des écrans qu'interdire ce qui est présent partout dans la société." },
+      { arg:"Les outils numériques éducatifs développent des compétences clés pour l'avenir", ex:"Des applications comme Duolingo, Khan Academy ou les jeux de programmation offrent un apprentissage ludique et efficace." },
+      { arg:"La maîtrise du numérique est une compétence essentielle dans la société moderne", ex:"Savoir utiliser un ordinateur, coder ou créer du contenu multimédia est aussi important que lire et écrire aujourd'hui." },
+      { arg:"Interdire totalement crée une frustration contre-productive et une méconnaissance du numérique", ex:"Mieux vaut accompagner et réguler l'usage des écrans qu'interdire ce qui est présent partout dans la société." },
     ],
   },
   { cat:'tech',
     fr:"Est-ce une bonne idée de permettre aux enfants d'utiliser les réseaux sociaux ?",
-    cn:"允许儿童使用社交网络是个好主意吗？",
     pour:[
-      { arg:"Communication avec famille et amis éloignés, réduction de l'isolement social", cn:"与远方家人和朋友联系，减少社会孤立", ex:"Des adolescents qui déménagent ou habitent loin de leur famille peuvent maintenir des liens importants grâce aux réseaux." },
-      { arg:"Développement des compétences numériques indispensables pour l'avenir professionnel", cn:"培养未来职业所需的数字能力", ex:"Savoir utiliser LinkedIn, créer du contenu ou modérer une communauté sont des compétences très recherchées." },
+      { arg:"Communication avec famille et amis éloignés, réduction de l'isolement social", ex:"Des adolescents qui déménagent ou habitent loin de leur famille peuvent maintenir des liens importants grâce aux réseaux." },
+      { arg:"Développement des compétences numériques indispensables pour l'avenir professionnel", ex:"Savoir utiliser LinkedIn, créer du contenu ou modérer une communauté sont des compétences très recherchées." },
     ],
     contre:[
-      { arg:"Impact psychologique négatif : comparaison sociale, estime de soi, anxiété et dépression", cn:"负面心理影响：社会比较、自尊心、焦虑和抑郁", ex:"Des études lient l'usage intensif d'Instagram à une augmentation de la dépression et de l'anxiété chez les adolescentes." },
-      { arg:"Cyberharcèlement, prédateurs et exposition à des contenus inappropriés", cn:"网络欺凌、捕食者和接触不当内容", ex:"Les cas de harcèlement amplifiés par les réseaux sociaux ont des conséquences parfois dramatiques et irréversibles." },
-      { arg:"Addiction aux écrans, troubles du sommeil et réduction du temps d'activité physique", cn:"屏幕成瘾、睡眠障碍和体育活动时间减少", ex:"Des adolescents passant 6 à 8 heures sur les réseaux sociaux abandonnent progressivement le sport et les sorties." },
-      { arg:"Incapacité de discernement des mineurs face aux contenus dangereux ou manipulatoires", cn:"未成年人无法辨别危险或操纵性内容", ex:"Les algorithmes des réseaux sociaux sont conçus pour maximiser l'engagement, pas pour protéger les mineurs." },
+      { arg:"Impact psychologique négatif : comparaison sociale, estime de soi, anxiété et dépression", ex:"Des études lient l'usage intensif d'Instagram à une augmentation de la dépression et de l'anxiété chez les adolescentes." },
+      { arg:"Cyberharcèlement, prédateurs et exposition à des contenus inappropriés", ex:"Les cas de harcèlement amplifiés par les réseaux sociaux ont des conséquences parfois dramatiques et irréversibles." },
+      { arg:"Addiction aux écrans, troubles du sommeil et réduction du temps d'activité physique", ex:"Des adolescents passant 6 à 8 heures sur les réseaux sociaux abandonnent progressivement le sport et les sorties." },
+      { arg:"Incapacité de discernement des mineurs face aux contenus dangereux ou manipulatoires", ex:"Les algorithmes des réseaux sociaux sont conçus pour maximiser l'engagement, pas pour protéger les mineurs." },
     ],
   },
   { cat:'tech',
     fr:"Quel est votre avis sur les nouvelles technologies et leur impact sur la société ?",
-    cn:"您对新技术及其对社会的影响有何看法？",
     pour:[
-      { arg:"Révolution de la communication : facilitation des échanges mondiaux et accès instantané à l'information", cn:"通信革命：促进全球交流，即时获取信息", ex:"On peut aujourd'hui collaborer en temps réel avec des équipes aux quatre coins du monde grâce aux outils numériques." },
-      { arg:"Amélioration du travail et de la productivité : télétravail, automatisation et nouvelles opportunités", cn:"改善工作和生产力：远程办公、自动化和新机遇", ex:"Des secteurs entiers (cybersécurité, IA, biotechnologies) ont été créés par les nouvelles technologies." },
-      { arg:"Révolution médicale : télémédecine, diagnostics plus précis et recherche accélérée", cn:"医疗革命：远程医疗、更精确的诊断和加速研究", ex:"L'intelligence artificielle diagnostique certains cancers avec une précision supérieure à celle des meilleurs radiologues." },
+      { arg:"Révolution de la communication : facilitation des échanges mondiaux et accès instantané à l'information", ex:"On peut aujourd'hui collaborer en temps réel avec des équipes aux quatre coins du monde grâce aux outils numériques." },
+      { arg:"Amélioration du travail et de la productivité : télétravail, automatisation et nouvelles opportunités", ex:"Des secteurs entiers (cybersécurité, IA, biotechnologies) ont été créés par les nouvelles technologies." },
+      { arg:"Révolution médicale : télémédecine, diagnostics plus précis et recherche accélérée", ex:"L'intelligence artificielle diagnostique certains cancers avec une précision supérieure à celle des meilleurs radiologues." },
     ],
     contre:[
-      { arg:"Risques sociaux : dépendance, isolement, atteinte à la vie privée et désinformation", cn:"社会风险：依赖性、孤立、侵犯隐私和虚假信息", ex:"Les fausses nouvelles se propagent 6 fois plus vite que les vraies sur les réseaux sociaux selon les recherches du MIT." },
-      { arg:"Fracture numérique et inégalités d'accès entre générations, pays et classes sociales", cn:"数字鸿沟以及代际、国家和社会阶层之间获取不平等", ex:"Des milliards de personnes restent exclues de la révolution numérique faute d'équipement ou de connexion." },
-      { arg:"Menace sur l'emploi : automatisation supprimant des emplois dans la logistique, la comptabilité, le commerce", cn:"对就业的威胁：自动化取消物流、会计和商业岗位", ex:"Selon certaines études, 40 % des emplois actuels pourraient être automatisés d'ici 20 ans." },
+      { arg:"Risques sociaux : dépendance, isolement, atteinte à la vie privée et désinformation", ex:"Les fausses nouvelles se propagent 6 fois plus vite que les vraies sur les réseaux sociaux selon les recherches du MIT." },
+      { arg:"Fracture numérique et inégalités d'accès entre générations, pays et classes sociales", ex:"Des milliards de personnes restent exclues de la révolution numérique faute d'équipement ou de connexion." },
+      { arg:"Menace sur l'emploi : automatisation supprimant des emplois dans la logistique, la comptabilité, le commerce", ex:"Selon certaines études, 40 % des emplois actuels pourraient être automatisés d'ici 20 ans." },
     ],
   },
 
   // ── L'ENVIRONNEMENT ──
   { cat:'enviro',
     fr:"Devrons-nous interdire la circulation des véhicules dans les villes ?",
-    cn:"我们应该禁止车辆在城市中行驶吗？",
     pour:[
-      { arg:"Réduction drastique de la pollution atmosphérique et amélioration de la santé publique", cn:"大幅减少大气污染，改善公共健康", ex:"À Paris, lors des journées sans voiture, la pollution aux particules fines baisse de plus de 30 % en quelques heures." },
-      { arg:"Revalorisation des centres-villes : création d'espaces piétonniers, de pistes cyclables et de zones vertes", cn:"城市中心振兴：创建步行区、自行车道和绿地", ex:"Des villes comme Oslo ou Ghent ont prouvé qu'une ville sans voitures est plus sûre, plus belle et plus animée." },
-      { arg:"Promotion des transports alternatifs : bus, vélo, trottinettes et véhicules électriques", cn:"推广替代交通方式：公交车、自行车、电动滑板车和电动车", ex:"Quand la voiture n'est plus une option facile, les gens adoptent naturellement des modes de transport plus durables." },
-      { arg:"Réduction des accidents de la route et amélioration de la sécurité pour piétons et cyclistes", cn:"减少交通事故，提高行人和骑行者的安全", ex:"Dans les zones piétonnes, le nombre d'accidents mortels chute radicalement." },
+      { arg:"Réduction drastique de la pollution atmosphérique et amélioration de la santé publique", ex:"À Paris, lors des journées sans voiture, la pollution aux particules fines baisse de plus de 30 % en quelques heures." },
+      { arg:"Revalorisation des centres-villes : création d'espaces piétonniers, de pistes cyclables et de zones vertes", ex:"Des villes comme Oslo ou Ghent ont prouvé qu'une ville sans voitures est plus sûre, plus belle et plus animée." },
+      { arg:"Promotion des transports alternatifs : bus, vélo, trottinettes et véhicules électriques", ex:"Quand la voiture n'est plus une option facile, les gens adoptent naturellement des modes de transport plus durables." },
+      { arg:"Réduction des accidents de la route et amélioration de la sécurité pour piétons et cyclistes", ex:"Dans les zones piétonnes, le nombre d'accidents mortels chute radicalement." },
     ],
     contre:[
-      { arg:"Alternatives insuffisantes : sans transports en commun performants, l'interdiction pénalise les usagers", cn:"替代方案不足：没有高效公共交通，禁令会惩罚用户", ex:"Dans de nombreuses villes moyennes, il n'existe pas de réseau de bus ou de métro suffisant pour remplacer la voiture." },
-      { arg:"Impact économique sur les commerces et les activités dépendant des livraisons et des clients motorisés", cn:"对依赖配送和驾车客户的商业和活动产生经济影响", ex:"De nombreux commerçants dépendent de clients venant en voiture — une interdiction pourrait les ruiner." },
-      { arg:"Discrimination des personnes à mobilité réduite, des seniors et des familles avec enfants en bas âge", cn:"歧视行动不便者、老年人和有幼儿的家庭", ex:"Toutes les personnes ne peuvent pas marcher ou faire du vélo — l'interdiction totale doit prévoir des exceptions." },
+      { arg:"Alternatives insuffisantes : sans transports en commun performants, l'interdiction pénalise les usagers", ex:"Dans de nombreuses villes moyennes, il n'existe pas de réseau de bus ou de métro suffisant pour remplacer la voiture." },
+      { arg:"Impact économique sur les commerces et les activités dépendant des livraisons et des clients motorisés", ex:"De nombreux commerçants dépendent de clients venant en voiture — une interdiction pourrait les ruiner." },
+      { arg:"Discrimination des personnes à mobilité réduite, des seniors et des familles avec enfants en bas âge", ex:"Toutes les personnes ne peuvent pas marcher ou faire du vélo — l'interdiction totale doit prévoir des exceptions." },
     ],
   },
   { cat:'enviro',
     fr:"Est-il important de développer les énergies renouvelables ? Pourquoi ?",
-    cn:"发展可再生能源重要吗？为什么？",
     pour:[
-      { arg:"Lutte contre le réchauffement climatique : réduction des émissions de CO₂ et de gaz à effet de serre", cn:"应对气候变暖：减少二氧化碳和温室气体排放", ex:"Le solaire et l'éolien produisent de l'électricité sans émettre de CO₂, contrairement au charbon ou au gaz." },
-      { arg:"Avantages économiques : création d'emplois verts, indépendance énergétique et réduction des coûts", cn:"经济优势：创造绿色就业岗位，能源独立，降低成本", ex:"La crise du gaz russe de 2022 a montré la vulnérabilité des pays dépendants des énergies fossiles importées." },
-      { arg:"Durabilité : ressources inépuisables (soleil, vent, eau) et sécurité énergétique à long terme", cn:"可持续性：取之不尽的资源（阳光、风、水）和长期能源安全", ex:"Contrairement au pétrole ou au charbon, les énergies renouvelables ne s'épuisent jamais et sont disponibles partout." },
-      { arg:"Santé publique : amélioration de la qualité de l'air et réduction des maladies respiratoires", cn:"公共卫生：改善空气质量，减少呼吸系统疾病", ex:"Des études montrent que la transition vers les énergies propres sauve des millions de vies par an dans le monde." },
+      { arg:"Lutte contre le réchauffement climatique : réduction des émissions de CO₂ et de gaz à effet de serre", ex:"Le solaire et l'éolien produisent de l'électricité sans émettre de CO₂, contrairement au charbon ou au gaz." },
+      { arg:"Avantages économiques : création d'emplois verts, indépendance énergétique et réduction des coûts", ex:"La crise du gaz russe de 2022 a montré la vulnérabilité des pays dépendants des énergies fossiles importées." },
+      { arg:"Durabilité : ressources inépuisables (soleil, vent, eau) et sécurité énergétique à long terme", ex:"Contrairement au pétrole ou au charbon, les énergies renouvelables ne s'épuisent jamais et sont disponibles partout." },
+      { arg:"Santé publique : amélioration de la qualité de l'air et réduction des maladies respiratoires", ex:"Des études montrent que la transition vers les énergies propres sauve des millions de vies par an dans le monde." },
     ],
     contre:[
-      { arg:"Coût de développement élevé et dépendance aux conditions météorologiques (intermittence)", cn:"开发成本高，依赖天气条件（间歇性）", ex:"Le solaire ne produit pas la nuit et l'éolien s'arrête par temps calme — il faut des solutions de stockage coûteuses." },
-      { arg:"Impact environnemental de la fabrication des panneaux et éoliennes (matériaux rares, pollution)", cn:"太阳能板和风力机制造的环境影响（稀有材料、污染）", ex:"Extraire le lithium, le cobalt et le néodyme nécessaires à ces technologies génère de la pollution et exploite des travailleurs." },
+      { arg:"Coût de développement élevé et dépendance aux conditions météorologiques (intermittence)", ex:"Le solaire ne produit pas la nuit et l'éolien s'arrête par temps calme — il faut des solutions de stockage coûteuses." },
+      { arg:"Impact environnemental de la fabrication des panneaux et éoliennes (matériaux rares, pollution)", ex:"Extraire le lithium, le cobalt et le néodyme nécessaires à ces technologies génère de la pollution et exploite des travailleurs." },
     ],
   },
   { cat:'enviro',
     fr:"Le tourisme nuit-il à l'environnement ?",
-    cn:"旅游业对环境有害吗？",
     pour:[
-      { arg:"Pollution massive des transports aériens et maritimes qui représentent une part importante des émissions", cn:"航空和海运交通的大量污染，占排放的重要部分", ex:"Un vol aller-retour Paris-New York émet autant de CO₂ qu'une voiture en plusieurs mois de conduite." },
-      { arg:"Surtourisme et dégradation irrémédiable des sites naturels et historiques", cn:"过度旅游和自然及历史景点的不可逆退化", ex:"Venise, Barcelone, le Machu Picchu et les plages de Thaïlande souffrent d'une surfréquentation destructrice." },
-      { arg:"Surexploitation des ressources locales : eau, énergie et destruction des habitats naturels", cn:"过度开采当地资源：水、能源和自然栖息地破坏", ex:"Les hôtels de luxe dans des régions arides consomment des quantités d'eau colossales au détriment des habitants." },
+      { arg:"Pollution massive des transports aériens et maritimes qui représentent une part importante des émissions", ex:"Un vol aller-retour Paris-New York émet autant de CO₂ qu'une voiture en plusieurs mois de conduite." },
+      { arg:"Surtourisme et dégradation irrémédiable des sites naturels et historiques", ex:"Venise, Barcelone, le Machu Picchu et les plages de Thaïlande souffrent d'une surfréquentation destructrice." },
+      { arg:"Surexploitation des ressources locales : eau, énergie et destruction des habitats naturels", ex:"Les hôtels de luxe dans des régions arides consomment des quantités d'eau colossales au détriment des habitants." },
     ],
     contre:[
-      { arg:"Le tourisme finance la conservation des parcs naturels et du patrimoine mondial", cn:"旅游业为自然公园和世界遗产的保护提供资金", ex:"Au Kenya et en Afrique du Sud, l'écotourisme génère des revenus qui financent la protection de la faune sauvage." },
-      { arg:"Sensibilisation des voyageurs à la richesse naturelle et culturelle du monde", cn:"让旅行者了解世界的自然和文化财富", ex:"Voir de près un récif corallien ou une forêt tropicale motive bien plus à s'engager pour leur protection." },
-      { arg:"Le tourisme responsable et durable offre une alternative viable au tourisme de masse", cn:"负责任的可持续旅游为大众旅游提供可行替代方案", ex:"Les séjours lents, les circuits locaux et l'hébergement chez l'habitant réduisent fortement l'empreinte écologique." },
+      { arg:"Le tourisme finance la conservation des parcs naturels et du patrimoine mondial", ex:"Au Kenya et en Afrique du Sud, l'écotourisme génère des revenus qui financent la protection de la faune sauvage." },
+      { arg:"Sensibilisation des voyageurs à la richesse naturelle et culturelle du monde", ex:"Voir de près un récif corallien ou une forêt tropicale motive bien plus à s'engager pour leur protection." },
+      { arg:"Le tourisme responsable et durable offre une alternative viable au tourisme de masse", ex:"Les séjours lents, les circuits locaux et l'hébergement chez l'habitant réduisent fortement l'empreinte écologique." },
     ],
   },
   { cat:'enviro',
     fr:"Pensez-vous que trier ses déchets soit à la portée de tous ?",
-    cn:"您认为垃圾分类是每个人都能做到的事吗？",
     pour:[
-      { arg:"Accessibilité du tri : geste simple, universel et sans coût supplémentaire pour les citoyens", cn:"分类的可及性：简单、通用，对公民没有额外成本", ex:"Avec des bacs de couleur différente et des consignes claires, trier ses déchets devient un automatisme en quelques semaines." },
-      { arg:"Infrastructure publique développée : conteneurs dans les villes, collecte sélective et déchetteries", cn:"完善的公共基础设施：城市垃圾桶、分类收集和废物处理站", ex:"La grande majorité des communes françaises disposent aujourd'hui d'un système de tri sélectif efficace." },
-      { arg:"Impact environnemental concret : réduction des déchets en décharge et économie de ressources", cn:"具体的环境影响：减少填埋垃圾，节约资源", ex:"Recycler une tonne d'aluminium économise l'énergie nécessaire à alimenter une maison pendant dix ans." },
+      { arg:"Accessibilité du tri : geste simple, universel et sans coût supplémentaire pour les citoyens", ex:"Avec des bacs de couleur différente et des consignes claires, trier ses déchets devient un automatisme en quelques semaines." },
+      { arg:"Infrastructure publique développée : conteneurs dans les villes, collecte sélective et déchetteries", ex:"La grande majorité des communes françaises disposent aujourd'hui d'un système de tri sélectif efficace." },
+      { arg:"Impact environnemental concret : réduction des déchets en décharge et économie de ressources", ex:"Recycler une tonne d'aluminium économise l'énergie nécessaire à alimenter une maison pendant dix ans." },
     ],
     contre:[
-      { arg:"Obstacles pratiques : consignes variables selon les villes, manque d'espace et problèmes de mobilité", cn:"实际障碍：各城市规定不一，空间不足和行动不便问题", ex:"Ce qui se trie dans le bac jaune à Lyon ne se trie pas forcément à Bordeaux — l'incohérence décourage beaucoup." },
-      { arg:"Manque d'information et d'éducation dans certaines zones défavorisées ou rurales", cn:"在某些贫困或农村地区缺乏信息和教育", ex:"Sans campagnes de sensibilisation efficaces, beaucoup de personnes ne savent pas quoi mettre dans quel bac." },
+      { arg:"Obstacles pratiques : consignes variables selon les villes, manque d'espace et problèmes de mobilité", ex:"Ce qui se trie dans le bac jaune à Lyon ne se trie pas forcément à Bordeaux — l'incohérence décourage beaucoup." },
+      { arg:"Manque d'information et d'éducation dans certaines zones défavorisées ou rurales", ex:"Sans campagnes de sensibilisation efficaces, beaucoup de personnes ne savent pas quoi mettre dans quel bac." },
     ],
   },
   { cat:'enviro',
     fr:"Quel est votre avis sur le recyclage des déchets et ses effets sur l'environnement ?",
-    cn:"您对垃圾回收及其对环境的影响有何看法？",
     pour:[
-      { arg:"Protection environnementale : réduction de la pollution des sols, des océans et diminution des gaz à effet de serre", cn:"环境保护：减少土壤和海洋污染，降低温室气体", ex:"Recycler le plastique évite qu'il finisse dans les océans où il se décompose en microplastiques dangereux." },
-      { arg:"Conservation des ressources : économie de matières premières et d'énergie dans la production", cn:"资源保护：节省原材料和生产能耗", ex:"Fabriquer de l'aluminium recyclé consomme 95 % moins d'énergie que d'en produire à partir de minerai." },
-      { arg:"Avantages économiques : création d'emplois verts et développement de nouvelles industries", cn:"经济优势：创造绿色就业岗位，发展新兴产业", ex:"Le secteur du recyclage emploie des millions de personnes dans le monde et génère des milliards d'euros de valeur." },
+      { arg:"Protection environnementale : réduction de la pollution des sols, des océans et diminution des gaz à effet de serre", ex:"Recycler le plastique évite qu'il finisse dans les océans où il se décompose en microplastiques dangereux." },
+      { arg:"Conservation des ressources : économie de matières premières et d'énergie dans la production", ex:"Fabriquer de l'aluminium recyclé consomme 95 % moins d'énergie que d'en produire à partir de minerai." },
+      { arg:"Avantages économiques : création d'emplois verts et développement de nouvelles industries", ex:"Le secteur du recyclage emploie des millions de personnes dans le monde et génère des milliards d'euros de valeur." },
     ],
     contre:[
-      { arg:"Le recyclage seul ne suffit pas : il faut avant tout réduire la consommation à la source", cn:"仅靠回收还不够：首先需要从源头减少消费", ex:"Recycler une bouteille en plastique est bien, mais en produire moins serait bien meilleur pour l'environnement." },
-      { arg:"Complexité du processus et coûts importants pour les collectivités et les industries", cn:"流程复杂，对地方政府和工业界成本高昂", ex:"Trier, collecter, transporter et retraiter les déchets nécessite d'importantes infrastructures et financements publics." },
+      { arg:"Le recyclage seul ne suffit pas : il faut avant tout réduire la consommation à la source", ex:"Recycler une bouteille en plastique est bien, mais en produire moins serait bien meilleur pour l'environnement." },
+      { arg:"Complexité du processus et coûts importants pour les collectivités et les industries", ex:"Trier, collecter, transporter et retraiter les déchets nécessite d'importantes infrastructures et financements publics." },
     ],
   },
 
   // ── LA SANTÉ ──
   { cat:'sante',
     fr:"Est-il possible de vivre sans médicaments ? Êtes-vous d'accord ?",
-    cn:"没有药物能够生活吗？您同意吗？",
     pour:[
-      { arg:"La médecine naturelle et la prévention par le mode de vie sain peuvent réduire les besoins", cn:"天然医学和健康生活方式预防可以减少用药需求", ex:"Une alimentation équilibrée, l'exercice régulier et la gestion du stress préviennent de nombreuses maladies chroniques." },
-      { arg:"La surmédicamentation est un problème de santé publique reconnu : antibiotiques inutiles, effets secondaires", cn:"过度用药是公认的公共卫生问题：不必要的抗生素、副作用", ex:"En France, 30 % des antibiotiques prescrits sont inutiles, créant des résistances bactériennes dangereuses pour tous." },
-      { arg:"Plantes médicinales, remèdes traditionnels et approches holistiques comme alternatives efficaces", cn:"草药、传统疗法和整体疗法作为有效替代方案", ex:"L'acupuncture, la phytothérapie et la méditation ont prouvé leur efficacité pour certaines douleurs chroniques." },
+      { arg:"La médecine naturelle et la prévention par le mode de vie sain peuvent réduire les besoins", ex:"Une alimentation équilibrée, l'exercice régulier et la gestion du stress préviennent de nombreuses maladies chroniques." },
+      { arg:"La surmédicamentation est un problème de santé publique reconnu : antibiotiques inutiles, effets secondaires", ex:"En France, 30 % des antibiotiques prescrits sont inutiles, créant des résistances bactériennes dangereuses pour tous." },
+      { arg:"Plantes médicinales, remèdes traditionnels et approches holistiques comme alternatives efficaces", ex:"L'acupuncture, la phytothérapie et la méditation ont prouvé leur efficacité pour certaines douleurs chroniques." },
     ],
     contre:[
-      { arg:"Certaines maladies graves nécessitent absolument des médicaments pour survivre", cn:"某些严重疾病绝对需要药物才能存活", ex:"Un diabétique de type 1 sans insuline, un épileptique sans traitement — leur vie est en danger immédiat." },
-      { arg:"Les vaccins et antibiotiques ont sauvé des centaines de millions de vies dans l'histoire", cn:"疫苗和抗生素在历史上拯救了数亿人的生命", ex:"Sans vaccins ni antibiotiques, des maladies comme la polio, la tuberculose ou la méningite tueraient des millions de personnes." },
-      { arg:"Refuser les médicaments nécessaires peut être dangereux, voire fatal, notamment dans les urgences", cn:"拒绝必要药物可能危险甚至致命，尤其在紧急情况下", ex:"Des parents ayant refusé des antibiotiques pour leurs enfants ont parfois eu des conséquences tragiques et irréversibles." },
+      { arg:"Certaines maladies graves nécessitent absolument des médicaments pour survivre", ex:"Un diabétique de type 1 sans insuline, un épileptique sans traitement — leur vie est en danger immédiat." },
+      { arg:"Les vaccins et antibiotiques ont sauvé des centaines de millions de vies dans l'histoire", ex:"Sans vaccins ni antibiotiques, des maladies comme la polio, la tuberculose ou la méningite tueraient des millions de personnes." },
+      { arg:"Refuser les médicaments nécessaires peut être dangereux, voire fatal, notamment dans les urgences", ex:"Des parents ayant refusé des antibiotiques pour leurs enfants ont parfois eu des conséquences tragiques et irréversibles." },
     ],
   },
   { cat:'sante',
     fr:"Le stress peut-il être utile ? Comment bien le gérer ?",
-    cn:"压力有用吗？如何有效管理？",
     pour:[
-      { arg:"Le stress positif (eustress) stimule la performance, la motivation et la créativité", cn:"正向压力（积极压力）刺激表现、动力和创造力", ex:"Avant un examen ou une présentation importante, une légère tension mentale pousse à donner le meilleur de soi." },
-      { arg:"Signal d'alarme biologique utile : réaction de survie face aux dangers et adaptation aux défis", cn:"有用的生物预警信号：面对危险的生存反应和适应挑战", ex:"La réaction de stress (adrénaline) a permis à notre espèce de survivre depuis des millénaires." },
-      { arg:"Techniques de gestion efficaces : exercice physique, méditation, respiration et organisation", cn:"有效管理技术：体育运动、冥想、呼吸和组织规划", ex:"Des études montrent que 20 minutes de marche rapide par jour réduisent significativement le niveau de cortisol." },
+      { arg:"Le stress positif (eustress) stimule la performance, la motivation et la créativité", ex:"Avant un examen ou une présentation importante, une légère tension mentale pousse à donner le meilleur de soi." },
+      { arg:"Signal d'alarme biologique utile : réaction de survie face aux dangers et adaptation aux défis", ex:"La réaction de stress (adrénaline) a permis à notre espèce de survivre depuis des millénaires." },
+      { arg:"Techniques de gestion efficaces : exercice physique, méditation, respiration et organisation", ex:"Des études montrent que 20 minutes de marche rapide par jour réduisent significativement le niveau de cortisol." },
     ],
     contre:[
-      { arg:"Le stress chronique est dangereux pour la santé : maladies cardiovasculaires, dépression, burn-out", cn:"慢性压力对健康有害：心血管疾病、抑郁、职业倦怠", ex:"Des études établissent un lien direct entre le stress prolongé au travail et les crises cardiaques." },
-      { arg:"Diminue la qualité de vie, la prise de décision et les relations interpersonnelles", cn:"降低生活质量、决策能力和人际关系", ex:"Un employé chroniquement stressé fait plus d'erreurs, communique moins bien et dégrade l'ambiance de toute son équipe." },
+      { arg:"Le stress chronique est dangereux pour la santé : maladies cardiovasculaires, dépression, burn-out", ex:"Des études établissent un lien direct entre le stress prolongé au travail et les crises cardiaques." },
+      { arg:"Diminue la qualité de vie, la prise de décision et les relations interpersonnelles", ex:"Un employé chroniquement stressé fait plus d'erreurs, communique moins bien et dégrade l'ambiance de toute son équipe." },
     ],
   },
   { cat:'sante',
     fr:"Pour être en bonne santé, est-il préférable de vivre à la campagne plutôt qu'en ville ?",
-    cn:"为了健康，住在农村比城市更好吗？",
     pour:[
-      { arg:"Air pur, absence de pollution sonore et atmosphérique bénéfiques pour la santé physique", cn:"清洁空气，没有噪音和大气污染，有益于身体健康", ex:"Les maladies respiratoires chroniques sont bien moins fréquentes dans les zones rurales peu industrialisées." },
-      { arg:"Proximité de la nature favorisant l'activité physique, la détente et le bien-être mental", cn:"靠近自然，促进体育活动、放松和心理健康", ex:"Jardiner, se promener en forêt ou faire du vélo sont des activités naturellement intégrées à la vie rurale." },
-      { arg:"Alimentation locale, saisonnière et moins transformée souvent plus accessible", cn:"本地、应季、加工较少的食品通常更容易获取", ex:"Les producteurs locaux et les marchés ruraux donnent accès à des produits frais de qualité à des prix raisonnables." },
+      { arg:"Air pur, absence de pollution sonore et atmosphérique bénéfiques pour la santé physique", ex:"Les maladies respiratoires chroniques sont bien moins fréquentes dans les zones rurales peu industrialisées." },
+      { arg:"Proximité de la nature favorisant l'activité physique, la détente et le bien-être mental", ex:"Jardiner, se promener en forêt ou faire du vélo sont des activités naturellement intégrées à la vie rurale." },
+      { arg:"Alimentation locale, saisonnière et moins transformée souvent plus accessible", ex:"Les producteurs locaux et les marchés ruraux donnent accès à des produits frais de qualité à des prix raisonnables." },
     ],
     contre:[
-      { arg:"Accès aux soins médicaux spécialisés beaucoup plus difficile en zone rurale", cn:"在农村地区获得专科医疗服务要困难得多", ex:"Les 'déserts médicaux' touchent des millions de ruraux français qui doivent attendre des heures pour voir un spécialiste." },
-      { arg:"Dépendance à la voiture réduisant la mobilité active et pouvant favoriser la sédentarité", cn:"对汽车的依赖减少了主动出行，可能助长久坐不动", ex:"Sans transports en commun, tout déplacement rural se fait en voiture, réduisant finalement la marche quotidienne." },
+      { arg:"Accès aux soins médicaux spécialisés beaucoup plus difficile en zone rurale", ex:"Les 'déserts médicaux' touchent des millions de ruraux français qui doivent attendre des heures pour voir un spécialiste." },
+      { arg:"Dépendance à la voiture réduisant la mobilité active et pouvant favoriser la sédentarité", ex:"Sans transports en commun, tout déplacement rural se fait en voiture, réduisant finalement la marche quotidienne." },
     ],
   },
   { cat:'sante',
     fr:"Aujourd'hui, de nombreuses personnes adoptent un régime végétarien. Que pensez-vous de cette tendance ?",
-    cn:"如今许多人采用素食饮食。您怎么看这种趋势？",
     pour:[
-      { arg:"Bienfaits pour la santé : réduction des risques cardiovasculaires, du cholestérol et de certains cancers", cn:"健康益处：降低心血管疾病、胆固醇和某些癌症风险", ex:"Des études de l'OMS montrent que les végétariens ont un risque de maladies cardiaques inférieur de 30 % à celui des non-végétariens." },
-      { arg:"Considérations éthiques : respect du bien-être animal et refus de la souffrance animale", cn:"伦理考量：尊重动物福利，拒绝动物痛苦", ex:"Des millions de personnes choisissent le végétarisme par cohérence avec leurs valeurs de non-violence." },
-      { arg:"Impact environnemental positif : réduction de l'empreinte carbone, économie d'eau et lutte contre la déforestation", cn:"正面环境影响：减少碳足迹、节约用水、对抗森林砍伐", ex:"L'élevage représente 14,5 % des émissions mondiales de gaz à effet de serre — réduire la viande aide concrètement la planète." },
+      { arg:"Bienfaits pour la santé : réduction des risques cardiovasculaires, du cholestérol et de certains cancers", ex:"Des études de l'OMS montrent que les végétariens ont un risque de maladies cardiaques inférieur de 30 % à celui des non-végétariens." },
+      { arg:"Considérations éthiques : respect du bien-être animal et refus de la souffrance animale", ex:"Des millions de personnes choisissent le végétarisme par cohérence avec leurs valeurs de non-violence." },
+      { arg:"Impact environnemental positif : réduction de l'empreinte carbone, économie d'eau et lutte contre la déforestation", ex:"L'élevage représente 14,5 % des émissions mondiales de gaz à effet de serre — réduire la viande aide concrètement la planète." },
     ],
     contre:[
-      { arg:"Risque de carences nutritionnelles si le régime est mal planifié (B12, fer, oméga-3)", cn:"如果饮食计划不当，可能导致营养缺乏（B12、铁、欧米伽3）", ex:"Les carences en vitamine B12 sont fréquentes chez les végétariens et peuvent causer des troubles neurologiques graves." },
-      { arg:"Pression sociale et idéologique qui peut s'avérer intrusive dans les choix alimentaires des autres", cn:"社会和意识形态压力可能对他人的饮食选择造成侵扰", ex:"Dicter aux autres ce qu'ils doivent manger crée des tensions et ignore les contextes culturels et économiques différents." },
+      { arg:"Risque de carences nutritionnelles si le régime est mal planifié (B12, fer, oméga-3)", ex:"Les carences en vitamine B12 sont fréquentes chez les végétariens et peuvent causer des troubles neurologiques graves." },
+      { arg:"Pression sociale et idéologique qui peut s'avérer intrusive dans les choix alimentaires des autres", ex:"Dicter aux autres ce qu'ils doivent manger crée des tensions et ignore les contextes culturels et économiques différents." },
     ],
   },
 
   // ── LES LOISIRS ──
   { cat:'loisirs',
     fr:"Quel est votre avis sur les jeux vidéo ? Impact positif ou négatif ?",
-    cn:"您对电子游戏有何看法？正面还是负面影响？",
     pour:[
-      { arg:"Développement cognitif : réflexes, résolution de problèmes, mémoire, concentration et stratégie", cn:"认知发展：反应能力、问题解决、记忆力、专注力和战略思维", ex:"Des études montrent que les joueurs de jeux de stratégie développent de meilleures capacités de planification et de prise de décision." },
-      { arg:"Aspects sociaux : création de liens, travail d'équipe et communication internationale", cn:"社交方面：建立联系、团队合作和国际交流", ex:"Des millions de joueurs du monde entier collaborent, communiquent et se font des amis durables grâce aux jeux multijoueurs." },
-      { arg:"Valeur éducative : apprentissage par la simulation, histoire, sciences, langues", cn:"教育价值：通过模拟学习、历史、科学、语言", ex:"Des jeux comme Civilization ou Assassin's Creed ont éveillé l'intérêt de nombreux jeunes pour l'histoire." },
+      { arg:"Développement cognitif : réflexes, résolution de problèmes, mémoire, concentration et stratégie", ex:"Des études montrent que les joueurs de jeux de stratégie développent de meilleures capacités de planification et de prise de décision." },
+      { arg:"Aspects sociaux : création de liens, travail d'équipe et communication internationale", ex:"Des millions de joueurs du monde entier collaborent, communiquent et se font des amis durables grâce aux jeux multijoueurs." },
+      { arg:"Valeur éducative : apprentissage par la simulation, histoire, sciences, langues", ex:"Des jeux comme Civilization ou Assassin's Creed ont éveillé l'intérêt de nombreux jeunes pour l'histoire." },
     ],
     contre:[
-      { arg:"Risque d'addiction reconnu par l'OMS comme trouble comportemental en 2018", cn:"2018年世卫组织将其认定为行为障碍的成瘾风险", ex:"Des adolescents souffrant de dépendance aux jeux vidéo présentent des symptômes comparables à ceux des addictions chimiques." },
-      { arg:"Sédentarité, troubles du sommeil et réduction du temps consacré aux activités physiques et sociales", cn:"久坐不动、睡眠障碍和减少体育和社交活动时间", ex:"Des heures de jeu quotidiennes remplacent le sport, les sorties et les devoirs — avec des conséquences scolaires et sanitaires." },
-      { arg:"Exposition à la violence, au cyberharcèlement et à des contenus inappropriés", cn:"接触暴力内容、网络欺凌和不当内容", ex:"Des études lient l'exposition prolongée à des jeux violents à une désensibilisation face à la violence réelle." },
+      { arg:"Risque d'addiction reconnu par l'OMS comme trouble comportemental en 2018", ex:"Des adolescents souffrant de dépendance aux jeux vidéo présentent des symptômes comparables à ceux des addictions chimiques." },
+      { arg:"Sédentarité, troubles du sommeil et réduction du temps consacré aux activités physiques et sociales", ex:"Des heures de jeu quotidiennes remplacent le sport, les sorties et les devoirs — avec des conséquences scolaires et sanitaires." },
+      { arg:"Exposition à la violence, au cyberharcèlement et à des contenus inappropriés", ex:"Des études lient l'exposition prolongée à des jeux violents à une désensibilisation face à la violence réelle." },
     ],
   },
   { cat:'loisirs',
     fr:"Le tourisme joue-t-il un rôle important dans un pays ?",
-    cn:"旅游业在一个国家中扮演重要角色吗？",
     pour:[
-      { arg:"Impact économique majeur : création d'emplois, génération de revenus et développement des infrastructures", cn:"重大经济影响：创造就业、产生收入和基础设施发展", ex:"Le tourisme représente environ 10 % du PIB mondial et emploie directement ou indirectement 1 travailleur sur 10." },
-      { arg:"Échanges culturels : promotion du patrimoine, rencontres entre cultures et enrichissement mutuel", cn:"文化交流：推广遗产、不同文化的相遇和相互丰富", ex:"Les touristes découvrent la gastronomie, les traditions et les arts locaux, ce qui développe l'empathie interculturelle." },
-      { arg:"Développement régional : amélioration des transports, modernisation des services et revitalisation des zones rurales", cn:"地区发展：改善交通、现代化服务和农村地区振兴", ex:"Des villages de montagne ou des régions côtières ont été transformés grâce aux revenus du tourisme." },
+      { arg:"Impact économique majeur : création d'emplois, génération de revenus et développement des infrastructures", ex:"Le tourisme représente environ 10 % du PIB mondial et emploie directement ou indirectement 1 travailleur sur 10." },
+      { arg:"Échanges culturels : promotion du patrimoine, rencontres entre cultures et enrichissement mutuel", ex:"Les touristes découvrent la gastronomie, les traditions et les arts locaux, ce qui développe l'empathie interculturelle." },
+      { arg:"Développement régional : amélioration des transports, modernisation des services et revitalisation des zones rurales", ex:"Des villages de montagne ou des régions côtières ont été transformés grâce aux revenus du tourisme." },
     ],
     contre:[
-      { arg:"Surtourisme : dégradation du patrimoine, expulsion des résidents et tensions sociales dans les villes touristiques", cn:"过度旅游：文化遗产退化、居民流离失所和旅游城市社会紧张", ex:"À Barcelone et Venise, les habitants manifestent contre un tourisme qui transforme leur ville en parc d'attractions." },
-      { arg:"Vulnérabilité économique : dépendance excessive au tourisme fragilise les économies en cas de crise", cn:"经济脆弱性：过度依赖旅游业使经济在危机时脆弱", ex:"La pandémie de COVID-19 a montré à quel point des pays comme la Thaïlande ou Chypre étaient vulnérables." },
+      { arg:"Surtourisme : dégradation du patrimoine, expulsion des résidents et tensions sociales dans les villes touristiques", ex:"À Barcelone et Venise, les habitants manifestent contre un tourisme qui transforme leur ville en parc d'attractions." },
+      { arg:"Vulnérabilité économique : dépendance excessive au tourisme fragilise les économies en cas de crise", ex:"La pandémie de COVID-19 a montré à quel point des pays comme la Thaïlande ou Chypre étaient vulnérables." },
     ],
   },
   { cat:'loisirs',
     fr:"Voyager seul ou accompagné : quelle est la meilleure option selon vous ?",
-    cn:"独自旅行还是结伴旅行：您认为哪个更好？",
     pour:[
-      { arg:"Avantages du voyage solo : liberté totale, développement de l'autonomie et rencontres authentiques", cn:"独自旅行优势：完全自由、培养自主性和真实相遇", ex:"Un voyageur seul est plus accessible et approchable — les locaux l'invitent plus facilement et partagent leur quotidien." },
-      { arg:"Développement personnel : confiance en soi, résilience et connaissance de soi face aux imprévus", cn:"个人发展：面对意外时的自信、抗压能力和自我认知", ex:"Faire face seul à un retard, une barrière de langue ou une urgence forge une confiance en soi inestimable." },
-      { arg:"Avantages du voyage accompagné : partage des émotions, sécurité mutuelle et réduction des coûts", cn:"结伴旅行优势：分享情感、相互安全保障和降低费用", ex:"Rire ensemble d'une galère ou s'émerveiller ensemble d'un coucher de soleil crée des souvenirs et des liens uniques." },
+      { arg:"Avantages du voyage solo : liberté totale, développement de l'autonomie et rencontres authentiques", ex:"Un voyageur seul est plus accessible et approchable — les locaux l'invitent plus facilement et partagent leur quotidien." },
+      { arg:"Développement personnel : confiance en soi, résilience et connaissance de soi face aux imprévus", ex:"Faire face seul à un retard, une barrière de langue ou une urgence forge une confiance en soi inestimable." },
+      { arg:"Avantages du voyage accompagné : partage des émotions, sécurité mutuelle et réduction des coûts", ex:"Rire ensemble d'une galère ou s'émerveiller ensemble d'un coucher de soleil crée des souvenirs et des liens uniques." },
     ],
     contre:[
-      { arg:"Inconvénients du voyage solo : risques sécuritaires, coûts plus élevés et solitude parfois pesante", cn:"独自旅行缺点：安全风险、更高费用和有时沉重的孤独感", ex:"Une chambre individuelle coûte souvent plus cher que la part d'une double, et certaines destinations restent risquées seul(e)." },
-      { arg:"Inconvénients du voyage accompagné : compromis permanents, conflits sur les décisions et moins de spontanéité", cn:"结伴旅行缺点：永久妥协、决策冲突和自发性减少", ex:"Quand les préférences divergent (budget, activités, rythme), les tensions peuvent gâcher l'expérience." },
+      { arg:"Inconvénients du voyage solo : risques sécuritaires, coûts plus élevés et solitude parfois pesante", ex:"Une chambre individuelle coûte souvent plus cher que la part d'une double, et certaines destinations restent risquées seul(e)." },
+      { arg:"Inconvénients du voyage accompagné : compromis permanents, conflits sur les décisions et moins de spontanéité", ex:"Quand les préférences divergent (budget, activités, rythme), les tensions peuvent gâcher l'expérience." },
     ],
   },
   { cat:'loisirs',
     fr:"Les zoos sont-ils utiles ? Si oui, pour quelles raisons ?",
-    cn:"动物园有用吗？如果有，原因是什么？",
     pour:[
-      { arg:"Conservation des espèces : programmes de reproduction contrôlée et réintroduction dans la nature", cn:"物种保护：受控繁殖计划和野外放归", ex:"Des programmes en zoo ont sauvé des espèces comme le panda géant, l'oryx d'Arabie et le vison d'Europe." },
-      { arg:"Éducation et sensibilisation : découverte de la faune sauvage et développement de la conscience écologique", cn:"教育与意识培养：认识野生动物，培养生态意识", ex:"Voir un animal en vrai crée une connexion émotionnelle qui motive bien plus à protéger la nature." },
-      { arg:"Recherche scientifique : étude du comportement animal, recherche vétérinaire et médicale", cn:"科学研究：动物行为研究，兽医和医学研究", ex:"Des traitements médicaux pour les humains ont été développés grâce à des recherches menées dans des zoos." },
+      { arg:"Conservation des espèces : programmes de reproduction contrôlée et réintroduction dans la nature", ex:"Des programmes en zoo ont sauvé des espèces comme le panda géant, l'oryx d'Arabie et le vison d'Europe." },
+      { arg:"Éducation et sensibilisation : découverte de la faune sauvage et développement de la conscience écologique", ex:"Voir un animal en vrai crée une connexion émotionnelle qui motive bien plus à protéger la nature." },
+      { arg:"Recherche scientifique : étude du comportement animal, recherche vétérinaire et médicale", ex:"Des traitements médicaux pour les humains ont été développés grâce à des recherches menées dans des zoos." },
     ],
     contre:[
-      { arg:"Bien-être animal : la captivité est contraire à la nature des animaux sauvages et cause souffrance", cn:"动物福利：圈养违背野生动物的天性，造成痛苦", ex:"Un éléphant ou un orque en captivité développe des comportements répétitifs et pathologiques liés à la souffrance psychologique." },
-      { arg:"Les ressources des zoos seraient mieux investies dans la protection directe des habitats naturels", cn:"动物园的资源更好地投入直接保护自然栖息地", ex:"Préserver une forêt tropicale ou un récif corallien sauve bien plus d'espèces que les programmes en captivité." },
+      { arg:"Bien-être animal : la captivité est contraire à la nature des animaux sauvages et cause souffrance", ex:"Un éléphant ou un orque en captivité développe des comportements répétitifs et pathologiques liés à la souffrance psychologique." },
+      { arg:"Les ressources des zoos seraient mieux investies dans la protection directe des habitats naturels", ex:"Préserver une forêt tropicale ou un récif corallien sauve bien plus d'espèces que les programmes en captivité." },
     ],
   },
 
   // ── LA CULTURE ──
   { cat:'culture',
     fr:"Est-ce que les musées devraient être gratuits pour tous ? Pourquoi ?",
-    cn:"博物馆应该对所有人免费吗？为什么？",
     pour:[
-      { arg:"Démocratisation culturelle : accès égal à la culture pour tous les citoyens, quel que soit leur revenu", cn:"文化民主化：无论收入如何，所有公民平等获取文化权利", ex:"Le Musée britannique est gratuit depuis sa fondation et accueille six millions de visiteurs par an, toutes classes confondues." },
-      { arg:"Éducation et formation : apprentissage accessible, éveil artistique des enfants et transmission du patrimoine", cn:"教育与培养：可及的学习、儿童艺术启蒙和遗产传承", ex:"En rendant les musées gratuits le premier dimanche du mois, la France a enregistré une hausse notable de la fréquentation populaire." },
-      { arg:"Bien-être social : lieu de rencontres, d'échanges et de développement de l'esprit critique", cn:"社会福祉：交流聚会的场所，发展批判性思维", ex:"Les musées gratuits deviennent des espaces publics vivants où des personnes de tous horizons se rencontrent et échangent." },
+      { arg:"Démocratisation culturelle : accès égal à la culture pour tous les citoyens, quel que soit leur revenu", ex:"Le Musée britannique est gratuit depuis sa fondation et accueille six millions de visiteurs par an, toutes classes confondues." },
+      { arg:"Éducation et formation : apprentissage accessible, éveil artistique des enfants et transmission du patrimoine", ex:"En rendant les musées gratuits le premier dimanche du mois, la France a enregistré une hausse notable de la fréquentation populaire." },
+      { arg:"Bien-être social : lieu de rencontres, d'échanges et de développement de l'esprit critique", ex:"Les musées gratuits deviennent des espaces publics vivants où des personnes de tous horizons se rencontrent et échangent." },
     ],
     contre:[
-      { arg:"Coût important pour les finances publiques et risque de réduction de la qualité des services", cn:"对公共财政成本高昂，服务质量下降的风险", ex:"Sans recettes billetterie, certains musées seraient contraints de réduire leurs expositions, horaires ou effectifs." },
-      { arg:"La gratuité ne suffit pas à lever les barrières culturelles — il faut aussi des actions pédagogiques", cn:"免费不足以消除文化障碍——还需要教育行动", ex:"Les personnes éloignées de la culture n'entrent pas dans un musée simplement parce que c'est gratuit." },
-      { arg:"Risque de surpopulation dans les musées les plus célèbres et dégradation de l'expérience de visite", cn:"最著名博物馆人满为患，参观体验下降的风险", ex:"Le Louvre reçoit déjà 9 millions de visiteurs par an — la gratuité totale créerait une saturation incontrôlable." },
+      { arg:"Coût important pour les finances publiques et risque de réduction de la qualité des services", ex:"Sans recettes billetterie, certains musées seraient contraints de réduire leurs expositions, horaires ou effectifs." },
+      { arg:"La gratuité ne suffit pas à lever les barrières culturelles — il faut aussi des actions pédagogiques", ex:"Les personnes éloignées de la culture n'entrent pas dans un musée simplement parce que c'est gratuit." },
+      { arg:"Risque de surpopulation dans les musées les plus célèbres et dégradation de l'expérience de visite", ex:"Le Louvre reçoit déjà 9 millions de visiteurs par an — la gratuité totale créerait une saturation incontrôlable." },
     ],
   },
   { cat:'culture',
     fr:"La diffusion de films et de musique sur Internet favorise-t-elle l'accès à la culture pour tous ?",
-    cn:"在互联网上传播电影和音乐是否促进了所有人的文化获取？",
     pour:[
-      { arg:"Suppression des barrières géographiques et financières : accès mondial à la culture", cn:"消除地理和经济障碍：全球获取文化", ex:"Un enfant en zone rurale peut aujourd'hui accéder aux mêmes films, musiques et expositions qu'un habitant de Paris." },
-      { arg:"Promotion des artistes indépendants et des cultures minoritaires auprès d'un public mondial", cn:"向全球受众推广独立艺术家和少数民族文化", ex:"Des musiciens africains, asiatiques ou sud-américains ont trouvé une audience internationale grâce aux plateformes numériques." },
-      { arg:"Diversification des goûts et ouverture sur des cultures et des genres moins connus", cn:"多元化品味，向不太知名的文化和流派开放", ex:"Les algorithmes de recommandation permettent de découvrir des films coréens, de la musique brésilienne ou des séries nordiques." },
+      { arg:"Suppression des barrières géographiques et financières : accès mondial à la culture", ex:"Un enfant en zone rurale peut aujourd'hui accéder aux mêmes films, musiques et expositions qu'un habitant de Paris." },
+      { arg:"Promotion des artistes indépendants et des cultures minoritaires auprès d'un public mondial", ex:"Des musiciens africains, asiatiques ou sud-américains ont trouvé une audience internationale grâce aux plateformes numériques." },
+      { arg:"Diversification des goûts et ouverture sur des cultures et des genres moins connus", ex:"Les algorithmes de recommandation permettent de découvrir des films coréens, de la musique brésilienne ou des séries nordiques." },
     ],
     contre:[
-      { arg:"Piratage et rémunération dérisoire des créateurs sur les plateformes de streaming", cn:"盗版和流媒体平台对创作者的微薄报酬", ex:"Un artiste perçoit parfois moins de 0,004 euro par écoute sur Spotify — un revenu insuffisant pour vivre de son art." },
-      { arg:"Homogénéisation des goûts par les algorithmes qui favorisent les contenus déjà populaires", cn:"算法对品味的同质化，优先推送已流行的内容", ex:"Les plateformes recommandent ce qui est déjà populaire — au détriment de la vraie diversité culturelle." },
-      { arg:"Fracture numérique : des millions de personnes restent exclues des bénéfices du numérique culturel", cn:"数字鸿沟：数百万人仍被排除在数字文化红利之外", ex:"Sans connexion Internet ni équipement adéquat, les populations les plus pauvres restent coupées de cet accès culturel." },
+      { arg:"Piratage et rémunération dérisoire des créateurs sur les plateformes de streaming", ex:"Un artiste perçoit parfois moins de 0,004 euro par écoute sur Spotify — un revenu insuffisant pour vivre de son art." },
+      { arg:"Homogénéisation des goûts par les algorithmes qui favorisent les contenus déjà populaires", ex:"Les plateformes recommandent ce qui est déjà populaire — au détriment de la vraie diversité culturelle." },
+      { arg:"Fracture numérique : des millions de personnes restent exclues des bénéfices du numérique culturel", ex:"Sans connexion Internet ni équipement adéquat, les populations les plus pauvres restent coupées de cet accès culturel." },
     ],
   },
   { cat:'culture',
     fr:"Doit-on préserver ses traditions et sa culture dans un pays d'accueil ?",
-    cn:"在东道国应该保留自己的传统和文化吗？",
     pour:[
-      { arg:"L'identité culturelle est une richesse personnelle et collective qu'on ne devrait jamais effacer", cn:"文化身份是不应被抹去的个人和集体财富", ex:"La langue maternelle, les fêtes familiales, la cuisine et les traditions sont des trésors identitaires à transmettre." },
-      { arg:"La diversité culturelle des immigrants enrichit profondément la société qui les accueille", cn:"移民的文化多样性深刻丰富了接纳他们的社会", ex:"La gastronomie, la musique, les arts des communautés immigrées ont transformé positivement beaucoup de cultures nationales." },
-      { arg:"La perte de culture d'origine peut créer une crise d'identité et des troubles psychologiques", cn:"失去原有文化可能导致身份危机和心理障碍", ex:"Des études montrent que les immigrants qui abandonnent totalement leur culture souffrent plus d'anxiété et de dépression." },
+      { arg:"L'identité culturelle est une richesse personnelle et collective qu'on ne devrait jamais effacer", ex:"La langue maternelle, les fêtes familiales, la cuisine et les traditions sont des trésors identitaires à transmettre." },
+      { arg:"La diversité culturelle des immigrants enrichit profondément la société qui les accueille", ex:"La gastronomie, la musique, les arts des communautés immigrées ont transformé positivement beaucoup de cultures nationales." },
+      { arg:"La perte de culture d'origine peut créer une crise d'identité et des troubles psychologiques", ex:"Des études montrent que les immigrants qui abandonnent totalement leur culture souffrent plus d'anxiété et de dépression." },
     ],
     contre:[
-      { arg:"S'adapter aux valeurs et aux codes du pays d'accueil est essentiel pour une intégration réussie", cn:"适应东道国的价值观和准则对于成功融合至关重要", ex:"Apprendre la langue locale, respecter les lois et les coutumes est une condition de base pour vivre ensemble sereinement." },
-      { arg:"Un entre-soi excessif dans sa communauté d'origine peut freiner l'intégration et créer des tensions", cn:"在原生社区过度封闭可能阻碍融合并制造紧张关系", ex:"Vivre exclusivement avec ses compatriotes empêche d'apprendre la langue locale et de tisser des liens avec la société." },
+      { arg:"S'adapter aux valeurs et aux codes du pays d'accueil est essentiel pour une intégration réussie", ex:"Apprendre la langue locale, respecter les lois et les coutumes est une condition de base pour vivre ensemble sereinement." },
+      { arg:"Un entre-soi excessif dans sa communauté d'origine peut freiner l'intégration et créer des tensions", ex:"Vivre exclusivement avec ses compatriotes empêche d'apprendre la langue locale et de tisser des liens avec la société." },
     ],
   },
   { cat:'sante',
     fr:"Aujourd'hui, tout le monde veut être beau. Que pensez-vous de l'importance de la beauté ?",
-    cn:"如今，每个人都想变美。您怎么看美貌的重要性？",
     pour:[
-      { arg:"La beauté améliore la confiance en soi, le bien-être psychologique et les relations sociales", cn:"美貌提升自信心、心理健康和社交关系", ex:"Des études montrent que les personnes soignées de leur apparence sont perçues comme plus compétentes et plus fiables." },
-      { arg:"L'esthétique comme forme d'expression artistique, d'identité et de créativité personnelle", cn:"美学作为艺术表达、身份认同和个人创造力的形式", ex:"Se vêtir avec soin, se coiffer ou se maquiller est un acte créatif qui reflète une vision du monde et une personnalité." },
-      { arg:"L'industrie de la beauté est un moteur économique important créant des millions d'emplois", cn:"美妆行业是重要的经济驱动力，创造数百万就业岗位", ex:"Le secteur cosmétique mondial représente des centaines de milliards d'euros et continue de croître chaque année." },
+      { arg:"La beauté améliore la confiance en soi, le bien-être psychologique et les relations sociales", ex:"Des études montrent que les personnes soignées de leur apparence sont perçues comme plus compétentes et plus fiables." },
+      { arg:"L'esthétique comme forme d'expression artistique, d'identité et de créativité personnelle", ex:"Se vêtir avec soin, se coiffer ou se maquiller est un acte créatif qui reflète une vision du monde et une personnalité." },
+      { arg:"L'industrie de la beauté est un moteur économique important créant des millions d'emplois", ex:"Le secteur cosmétique mondial représente des centaines de milliards d'euros et continue de croître chaque année." },
     ],
     contre:[
-      { arg:"Le culte de la beauté physique génère des complexes, des troubles alimentaires et une pression sociale néfaste", cn:"对外貌美丽的崇拜产生自卑感、饮食失调和有害社会压力", ex:"L'obsession de la minceur et des standards irréalistes est directement liée à l'augmentation de l'anorexie chez les jeunes." },
-      { arg:"La beauté intérieure — intelligence, gentillesse, intégrité — devrait primer sur l'apparence physique", cn:"内在美——智慧、善良、正直——应该优于外貌", ex:"Les personnes les plus admirées sur le long terme le sont pour leur caractère et leurs actions, pas pour leur physique." },
-      { arg:"Coûts financiers importants et inégalités sociales liées aux standards de beauté imposés", cn:"高昂的经济成本和美貌标准所带来的社会不平等", ex:"Se conformer aux standards de beauté modernes (vêtements, soins, chirurgie) représente des dépenses considérables." },
+      { arg:"Le culte de la beauté physique génère des complexes, des troubles alimentaires et une pression sociale néfaste", ex:"L'obsession de la minceur et des standards irréalistes est directement liée à l'augmentation de l'anorexie chez les jeunes." },
+      { arg:"La beauté intérieure — intelligence, gentillesse, intégrité — devrait primer sur l'apparence physique", ex:"Les personnes les plus admirées sur le long terme le sont pour leur caractère et leurs actions, pas pour leur physique." },
+      { arg:"Coûts financiers importants et inégalités sociales liées aux standards de beauté imposés", ex:"Se conformer aux standards de beauté modernes (vêtements, soins, chirurgie) représente des dépenses considérables." },
     ],
   },
 ];
@@ -2060,302 +2038,302 @@ let currentQ = null;
 const VOCAB = {
   quotidien: {
     noms: [
-      { w:"le transport en commun", cn:"公共交通", ex:"Le transport en commun est gratuit dans cette ville." },
-      { w:"le trajet", cn:"通勤路程", ex:"Mon trajet dure 45 minutes chaque matin." },
-      { w:"le loyer", cn:"租金", ex:"Le loyer a beaucoup augmenté ces dernières années." },
-      { w:"le mode de vie", cn:"生活方式", ex:"Chacun a son propre mode de vie." },
-      { w:"le bien-être", cn:"幸福/福祉", ex:"Le bien-être des citoyens est une priorité." },
-      { w:"les inégalités (f.pl)", cn:"不平等", ex:"Les inégalités sociales restent importantes." },
-      { w:"la qualité de vie", cn:"生活质量", ex:"La qualité de vie en ville peut être stressante." },
-      { w:"la pollution", cn:"污染", ex:"La pollution atmosphérique est un problème majeur." },
-      { w:"les embouteillages (m.pl)", cn:"交通堵塞", ex:"Les embouteillages font perdre du temps." },
-      { w:"la campagne", cn:"农村/乡村", ex:"Elle préfère vivre à la campagne pour la tranquillité." },
+      { w:"le transport en commun", ex:"Le transport en commun est gratuit dans cette ville." },
+      { w:"le trajet", ex:"Mon trajet dure 45 minutes chaque matin." },
+      { w:"le loyer", ex:"Le loyer a beaucoup augmenté ces dernières années." },
+      { w:"le mode de vie", ex:"Chacun a son propre mode de vie." },
+      { w:"le bien-être", ex:"Le bien-être des citoyens est une priorité." },
+      { w:"les inégalités (f.pl)", ex:"Les inégalités sociales restent importantes." },
+      { w:"la qualité de vie", ex:"La qualité de vie en ville peut être stressante." },
+      { w:"la pollution", ex:"La pollution atmosphérique est un problème majeur." },
+      { w:"les embouteillages (m.pl)", ex:"Les embouteillages font perdre du temps." },
+      { w:"la campagne", ex:"Elle préfère vivre à la campagne pour la tranquillité." },
     ],
     verbes: [
-      { w:"se déplacer", cn:"出行/移动", ex:"Il est facile de se déplacer sans voiture en ville." },
-      { w:"améliorer", cn:"改善", ex:"Ces mesures améliorent la qualité de vie." },
-      { w:"réduire", cn:"减少", ex:"On peut réduire la pollution en utilisant les transports en commun." },
-      { w:"profiter de", cn:"享受/利用", ex:"On peut profiter de la nature à la campagne." },
-      { w:"coûter", cn:"花费", ex:"Vivre en ville coûte souvent plus cher." },
-      { w:"polluer", cn:"污染", ex:"Les voitures polluent beaucoup l'air urbain." },
-      { w:"économiser", cn:"节省", ex:"Prendre le bus permet d'économiser de l'argent." },
+      { w:"se déplacer", ex:"Il est facile de se déplacer sans voiture en ville." },
+      { w:"améliorer", ex:"Ces mesures améliorent la qualité de vie." },
+      { w:"réduire", ex:"On peut réduire la pollution en utilisant les transports en commun." },
+      { w:"profiter de", ex:"On peut profiter de la nature à la campagne." },
+      { w:"coûter", ex:"Vivre en ville coûte souvent plus cher." },
+      { w:"polluer", ex:"Les voitures polluent beaucoup l'air urbain." },
+      { w:"économiser", ex:"Prendre le bus permet d'économiser de l'argent." },
     ],
     adj: [
-      { w:"gratuit(e)", cn:"免费的", ex:"Les transports en commun devraient être gratuits." },
-      { w:"accessible", cn:"可获得的/易达到的", ex:"Les soins médicaux doivent être accessibles à tous." },
-      { w:"stressant(e)", cn:"有压力的", ex:"La vie urbaine peut être très stressante." },
-      { w:"tranquille", cn:"安静的/平静的", ex:"La campagne offre un environnement tranquille." },
-      { w:"cher / chère", cn:"昂贵的", ex:"Les loyers sont très chers dans les grandes villes." },
-      { w:"équitable", cn:"公平的", ex:"Une société équitable donne les mêmes chances à tous." },
+      { w:"gratuit(e)", ex:"Les transports en commun devraient être gratuits." },
+      { w:"accessible", ex:"Les soins médicaux doivent être accessibles à tous." },
+      { w:"stressant(e)", ex:"La vie urbaine peut être très stressante." },
+      { w:"tranquille", ex:"La campagne offre un environnement tranquille." },
+      { w:"cher / chère", ex:"Les loyers sont très chers dans les grandes villes." },
+      { w:"équitable", ex:"Une société équitable donne les mêmes chances à tous." },
     ],
     express: [
-      { w:"d'un côté… de l'autre", cn:"一方面……另一方面", ex:"D'un côté, la ville offre des opportunités ; de l'autre, elle est stressante." },
-      { w:"en revanche", cn:"相反地/然而", ex:"La campagne est calme ; en revanche, les services y manquent." },
-      { w:"dans l'ensemble", cn:"总体而言", ex:"Dans l'ensemble, je préfère vivre en ville." },
-      { w:"il me semble que", cn:"在我看来", ex:"Il me semble que la gratuité des transports est une bonne idée." },
+      { w:"d'un côté… de l'autre", ex:"D'un côté, la ville offre des opportunités ; de l'autre, elle est stressante." },
+      { w:"en revanche", ex:"La campagne est calme ; en revanche, les services y manquent." },
+      { w:"dans l'ensemble", ex:"Dans l'ensemble, je préfère vivre en ville." },
+      { w:"il me semble que", ex:"Il me semble que la gratuité des transports est une bonne idée." },
     ],
   },
   education: {
     noms: [
-      { w:"le diplôme", cn:"文凭/学位", ex:"Un diplôme peut ouvrir de nombreuses portes professionnelles." },
-      { w:"la formation", cn:"培训/学习", ex:"La formation professionnelle est très valorisée." },
-      { w:"l'apprentissage (m)", cn:"学徒制/学习", ex:"L'apprentissage permet d'apprendre un métier en pratiquant." },
-      { w:"les matières (f.pl)", cn:"学科/课程", ex:"Les matières artistiques développent la créativité." },
-      { w:"la réussite", cn:"成功/成就", ex:"La réussite scolaire ne garantit pas le bonheur." },
-      { w:"la créativité", cn:"创造力", ex:"L'école doit favoriser la créativité des élèves." },
-      { w:"la discipline", cn:"纪律/学科", ex:"La discipline est essentielle pour bien travailler." },
-      { w:"la sortie pédagogique", cn:"教育参观活动", ex:"Les sorties pédagogiques enrichissent l'apprentissage." },
-      { w:"l'autonomie (f)", cn:"自主性", ex:"L'école doit développer l'autonomie des élèves." },
+      { w:"le diplôme", ex:"Un diplôme peut ouvrir de nombreuses portes professionnelles." },
+      { w:"la formation", ex:"La formation professionnelle est très valorisée." },
+      { w:"l'apprentissage (m)", ex:"L'apprentissage permet d'apprendre un métier en pratiquant." },
+      { w:"les matières (f.pl)", ex:"Les matières artistiques développent la créativité." },
+      { w:"la réussite", ex:"La réussite scolaire ne garantit pas le bonheur." },
+      { w:"la créativité", ex:"L'école doit favoriser la créativité des élèves." },
+      { w:"la discipline", ex:"La discipline est essentielle pour bien travailler." },
+      { w:"la sortie pédagogique", ex:"Les sorties pédagogiques enrichissent l'apprentissage." },
+      { w:"l'autonomie (f)", ex:"L'école doit développer l'autonomie des élèves." },
     ],
     verbes: [
-      { w:"apprendre", cn:"学习/教导", ex:"On n'arrête jamais d'apprendre." },
-      { w:"réussir", cn:"成功", ex:"Il faut travailler dur pour réussir ses études." },
-      { w:"encourager", cn:"鼓励", ex:"Les parents doivent encourager leurs enfants." },
-      { w:"développer", cn:"发展/培养", ex:"Le théâtre développe la confiance en soi." },
-      { w:"enseigner", cn:"教授", ex:"On devrait enseigner les langues dès le plus jeune âge." },
-      { w:"former", cn:"培养/培训", ex:"L'école forme les citoyens de demain." },
-      { w:"favoriser", cn:"促进/有利于", ex:"La lecture favorise le développement du langage." },
+      { w:"apprendre", ex:"On n'arrête jamais d'apprendre." },
+      { w:"réussir", ex:"Il faut travailler dur pour réussir ses études." },
+      { w:"encourager", ex:"Les parents doivent encourager leurs enfants." },
+      { w:"développer", ex:"Le théâtre développe la confiance en soi." },
+      { w:"enseigner", ex:"On devrait enseigner les langues dès le plus jeune âge." },
+      { w:"former", ex:"L'école forme les citoyens de demain." },
+      { w:"favoriser", ex:"La lecture favorise le développement du langage." },
     ],
     adj: [
-      { w:"strict(e)", cn:"严格的", ex:"Une éducation trop stricte peut nuire à la créativité." },
-      { w:"créatif / créative", cn:"有创造力的", ex:"Les enfants sont naturellement créatifs." },
-      { w:"obligatoire", cn:"强制的/必修的", ex:"L'école est obligatoire jusqu'à 16 ans en France." },
-      { w:"bénéfique", cn:"有益的", ex:"Les sorties scolaires sont bénéfiques pour les enfants." },
-      { w:"motivé(e)", cn:"有积极性的", ex:"Un élève motivé apprend beaucoup plus vite." },
-      { w:"qualifié(e)", cn:"有资质的", ex:"Il faut des enseignants qualifiés dans toutes les matières." },
+      { w:"strict(e)", ex:"Une éducation trop stricte peut nuire à la créativité." },
+      { w:"créatif / créative", ex:"Les enfants sont naturellement créatifs." },
+      { w:"obligatoire", ex:"L'école est obligatoire jusqu'à 16 ans en France." },
+      { w:"bénéfique", ex:"Les sorties scolaires sont bénéfiques pour les enfants." },
+      { w:"motivé(e)", ex:"Un élève motivé apprend beaucoup plus vite." },
+      { w:"qualifié(e)", ex:"Il faut des enseignants qualifiés dans toutes les matières." },
     ],
     express: [
-      { w:"à mon avis", cn:"在我看来", ex:"À mon avis, il faut faire des études pour réussir." },
-      { w:"il est indéniable que", cn:"不可否认的是", ex:"Il est indéniable que l'éducation joue un rôle clé." },
-      { w:"cela dit", cn:"话虽如此", ex:"Cela dit, le diplôme n'est pas tout." },
-      { w:"par exemple", cn:"例如", ex:"Par exemple, Bill Gates a réussi sans terminer ses études." },
+      { w:"à mon avis", ex:"À mon avis, il faut faire des études pour réussir." },
+      { w:"il est indéniable que", ex:"Il est indéniable que l'éducation joue un rôle clé." },
+      { w:"cela dit", ex:"Cela dit, le diplôme n'est pas tout." },
+      { w:"par exemple", ex:"Par exemple, Bill Gates a réussi sans terminer ses études." },
     ],
   },
   profession: {
     noms: [
-      { w:"le salaire", cn:"薪水", ex:"Le salaire n'est pas le seul facteur de satisfaction au travail." },
-      { w:"le télétravail", cn:"远程办公", ex:"Le télétravail offre plus de flexibilité." },
-      { w:"la carrière", cn:"职业生涯", ex:"Changer de carrière est possible à tout âge." },
-      { w:"la retraite", cn:"退休", ex:"L'âge de la retraite augmente dans de nombreux pays." },
-      { w:"l'employeur (m)", cn:"雇主", ex:"L'employeur doit respecter les droits des employés." },
-      { w:"la reconversion", cn:"职业转型", ex:"La reconversion professionnelle demande du courage." },
-      { w:"les conditions de travail (f.pl)", cn:"工作条件", ex:"De bonnes conditions de travail améliorent la productivité." },
-      { w:"la productivité", cn:"生产力", ex:"La sieste améliore la productivité selon des études." },
-      { w:"l'équilibre travail-vie (m)", cn:"工作与生活平衡", ex:"Le télétravail aide à mieux gérer l'équilibre travail-vie." },
+      { w:"le salaire", ex:"Le salaire n'est pas le seul facteur de satisfaction au travail." },
+      { w:"le télétravail", ex:"Le télétravail offre plus de flexibilité." },
+      { w:"la carrière", ex:"Changer de carrière est possible à tout âge." },
+      { w:"la retraite", ex:"L'âge de la retraite augmente dans de nombreux pays." },
+      { w:"l'employeur (m)", ex:"L'employeur doit respecter les droits des employés." },
+      { w:"la reconversion", ex:"La reconversion professionnelle demande du courage." },
+      { w:"les conditions de travail (f.pl)", ex:"De bonnes conditions de travail améliorent la productivité." },
+      { w:"la productivité", ex:"La sieste améliore la productivité selon des études." },
+      { w:"l'équilibre travail-vie (m)", ex:"Le télétravail aide à mieux gérer l'équilibre travail-vie." },
     ],
     verbes: [
-      { w:"travailler", cn:"工作", ex:"Travailler jusqu'à 70 ans est difficile pour certains métiers." },
-      { w:"démissionner", cn:"辞职", ex:"Beaucoup de gens démissionnent pour un travail plus épanouissant." },
-      { w:"se reconvertir", cn:"转行", ex:"Elle a décidé de se reconvertir dans l'enseignement." },
-      { w:"valoriser", cn:"重视/提升价值", ex:"La société doit valoriser les métiers essentiels." },
-      { w:"embaucher", cn:"雇用", ex:"Les entreprises peinent à embaucher des profils senior." },
-      { w:"s'épanouir", cn:"实现自我/成长", ex:"Il est important de s'épanouir dans son travail." },
-      { w:"progresser", cn:"进步/晋升", ex:"Pour progresser, il faut être compétent et motivé." },
+      { w:"travailler", ex:"Travailler jusqu'à 70 ans est difficile pour certains métiers." },
+      { w:"démissionner", ex:"Beaucoup de gens démissionnent pour un travail plus épanouissant." },
+      { w:"se reconvertir", ex:"Elle a décidé de se reconvertir dans l'enseignement." },
+      { w:"valoriser", ex:"La société doit valoriser les métiers essentiels." },
+      { w:"embaucher", ex:"Les entreprises peinent à embaucher des profils senior." },
+      { w:"s'épanouir", ex:"Il est important de s'épanouir dans son travail." },
+      { w:"progresser", ex:"Pour progresser, il faut être compétent et motivé." },
     ],
     adj: [
-      { w:"épanouissant(e)", cn:"令人满足的", ex:"Un travail épanouissant est plus précieux qu'un bon salaire." },
-      { w:"précaire", cn:"不稳定的", ex:"Les métiers artistiques sont souvent précaires." },
-      { w:"qualifié(e)", cn:"有资质的", ex:"Les travailleurs qualifiés sont très recherchés." },
-      { w:"flexible", cn:"灵活的", ex:"Le télétravail offre des horaires flexibles." },
-      { w:"compétent(e)", cn:"有能力的", ex:"Il faut être compétent pour progresser dans une entreprise." },
+      { w:"épanouissant(e)", ex:"Un travail épanouissant est plus précieux qu'un bon salaire." },
+      { w:"précaire", ex:"Les métiers artistiques sont souvent précaires." },
+      { w:"qualifié(e)", ex:"Les travailleurs qualifiés sont très recherchés." },
+      { w:"flexible", ex:"Le télétravail offre des horaires flexibles." },
+      { w:"compétent(e)", ex:"Il faut être compétent pour progresser dans une entreprise." },
     ],
     express: [
-      { w:"d'une part… d'autre part", cn:"一方面……另一方面", ex:"D'une part, le salaire est important ; d'autre part, l'ambiance aussi." },
-      { w:"en outre", cn:"此外", ex:"En outre, le télétravail réduit les frais de transport." },
-      { w:"il convient de souligner que", cn:"值得强调的是", ex:"Il convient de souligner que le bien-être au travail est essentiel." },
-      { w:"néanmoins", cn:"尽管如此", ex:"Néanmoins, certains préfèrent travailler en présentiel." },
+      { w:"d'une part… d'autre part", ex:"D'une part, le salaire est important ; d'autre part, l'ambiance aussi." },
+      { w:"en outre", ex:"En outre, le télétravail réduit les frais de transport." },
+      { w:"il convient de souligner que", ex:"Il convient de souligner que le bien-être au travail est essentiel." },
+      { w:"néanmoins", ex:"Néanmoins, certains préfèrent travailler en présentiel." },
     ],
   },
   famille: {
     noms: [
-      { w:"le lien familial", cn:"家庭纽带", ex:"Le lien familial est souvent le plus fort." },
-      { w:"la solidarité", cn:"团结/互助", ex:"La solidarité familiale est essentielle en période difficile." },
-      { w:"l'entraide (f)", cn:"互助", ex:"L'entraide entre générations est précieuse." },
-      { w:"la cohabitation", cn:"同住", ex:"La cohabitation avec ses parents peut poser des problèmes." },
-      { w:"le soutien", cn:"支持/支撑", ex:"La famille apporte un soutien moral important." },
-      { w:"l'autonomie (f)", cn:"自主性", ex:"Vivre seul développe l'autonomie." },
-      { w:"la confiance", cn:"信任", ex:"La confiance est la base de toute relation." },
-      { w:"le conflit", cn:"冲突", ex:"Les conflits familiaux peuvent être difficiles à gérer." },
+      { w:"le lien familial", ex:"Le lien familial est souvent le plus fort." },
+      { w:"la solidarité", ex:"La solidarité familiale est essentielle en période difficile." },
+      { w:"l'entraide (f)", ex:"L'entraide entre générations est précieuse." },
+      { w:"la cohabitation", ex:"La cohabitation avec ses parents peut poser des problèmes." },
+      { w:"le soutien", ex:"La famille apporte un soutien moral important." },
+      { w:"l'autonomie (f)", ex:"Vivre seul développe l'autonomie." },
+      { w:"la confiance", ex:"La confiance est la base de toute relation." },
+      { w:"le conflit", ex:"Les conflits familiaux peuvent être difficiles à gérer." },
     ],
     verbes: [
-      { w:"s'entendre", cn:"相处融洽", ex:"Il est important de bien s'entendre avec sa famille." },
-      { w:"soutenir", cn:"支持", ex:"La famille doit soutenir ses membres en difficulté." },
-      { w:"partager", cn:"分享", ex:"Partager des moments ensemble renforce les liens." },
-      { w:"se disputer", cn:"争吵", ex:"Même les meilleures familles se disputent parfois." },
-      { w:"s'épanouir", cn:"成长/实现自我", ex:"Chacun doit pouvoir s'épanouir dans sa famille." },
-      { w:"cohabiter", cn:"同住", ex:"Cohabiter avec ses parents après 25 ans est de plus en plus courant." },
+      { w:"s'entendre", ex:"Il est important de bien s'entendre avec sa famille." },
+      { w:"soutenir", ex:"La famille doit soutenir ses membres en difficulté." },
+      { w:"partager", ex:"Partager des moments ensemble renforce les liens." },
+      { w:"se disputer", ex:"Même les meilleures familles se disputent parfois." },
+      { w:"s'épanouir", ex:"Chacun doit pouvoir s'épanouir dans sa famille." },
+      { w:"cohabiter", ex:"Cohabiter avec ses parents après 25 ans est de plus en plus courant." },
     ],
     adj: [
-      { w:"uni(e)", cn:"团结的", ex:"Une famille unie surmonte mieux les épreuves." },
-      { w:"indépendant(e)", cn:"独立的", ex:"À 25 ans, on cherche à être indépendant." },
-      { w:"inconditionnel(le)", cn:"无条件的", ex:"L'amour familial est souvent inconditionnel." },
-      { w:"proche", cn:"亲近的", ex:"Je me sens très proche de mes frères et sœurs." },
-      { w:"complice", cn:"默契的/亲密的", ex:"Une relation complice se construit avec le temps." },
+      { w:"uni(e)", ex:"Une famille unie surmonte mieux les épreuves." },
+      { w:"indépendant(e)", ex:"À 25 ans, on cherche à être indépendant." },
+      { w:"inconditionnel(le)", ex:"L'amour familial est souvent inconditionnel." },
+      { w:"proche", ex:"Je me sens très proche de mes frères et sœurs." },
+      { w:"complice", ex:"Une relation complice se construit avec le temps." },
     ],
     express: [
-      { w:"quoi qu'il arrive", cn:"不管发生什么", ex:"Quoi qu'il arrive, la famille sera toujours là." },
-      { w:"dans la mesure où", cn:"在……程度上/由于", ex:"La famille est importante dans la mesure où elle apporte du soutien." },
-      { w:"certes… mais", cn:"诚然……但", ex:"Certes, vivre seul offre de la liberté, mais la solitude peut être pesante." },
+      { w:"quoi qu'il arrive", ex:"Quoi qu'il arrive, la famille sera toujours là." },
+      { w:"dans la mesure où", ex:"La famille est importante dans la mesure où elle apporte du soutien." },
+      { w:"certes… mais", ex:"Certes, vivre seul offre de la liberté, mais la solitude peut être pesante." },
     ],
   },
   tech: {
     noms: [
-      { w:"les réseaux sociaux (m.pl)", cn:"社交网络", ex:"Les réseaux sociaux ont changé nos façons de communiquer." },
-      { w:"les données personnelles (f.pl)", cn:"个人数据", ex:"Nos données personnelles sont collectées par les entreprises." },
-      { w:"la dépendance", cn:"依赖/成瘾", ex:"La dépendance aux écrans est un problème croissant." },
-      { w:"l'intelligence artificielle (f)", cn:"人工智能", ex:"L'intelligence artificielle va transformer le marché du travail." },
-      { w:"la vie privée", cn:"隐私", ex:"Internet menace parfois notre vie privée." },
-      { w:"le numérique", cn:"数字/数字化", ex:"La fracture numérique touche les personnes âgées." },
-      { w:"l'écran (m)", cn:"屏幕", ex:"Les enfants passent trop de temps devant les écrans." },
-      { w:"la désinformation", cn:"虚假信息", ex:"La désinformation se propage rapidement sur Internet." },
+      { w:"les réseaux sociaux (m.pl)", ex:"Les réseaux sociaux ont changé nos façons de communiquer." },
+      { w:"les données personnelles (f.pl)", ex:"Nos données personnelles sont collectées par les entreprises." },
+      { w:"la dépendance", ex:"La dépendance aux écrans est un problème croissant." },
+      { w:"l'intelligence artificielle (f)", ex:"L'intelligence artificielle va transformer le marché du travail." },
+      { w:"la vie privée", ex:"Internet menace parfois notre vie privée." },
+      { w:"le numérique", ex:"La fracture numérique touche les personnes âgées." },
+      { w:"l'écran (m)", ex:"Les enfants passent trop de temps devant les écrans." },
+      { w:"la désinformation", ex:"La désinformation se propage rapidement sur Internet." },
     ],
     verbes: [
-      { w:"connecter", cn:"连接", ex:"Internet nous connecte au monde entier." },
-      { w:"partager", cn:"分享", ex:"On partage trop d'informations personnelles en ligne." },
-      { w:"contrôler", cn:"控制/监管", ex:"Les parents doivent contrôler l'usage des écrans." },
-      { w:"accéder à", cn:"获取/访问", ex:"Internet permet d'accéder à une quantité d'informations immense." },
-      { w:"surveiller", cn:"监控/监视", ex:"Les caméras de surveillance améliorent la sécurité." },
-      { w:"dépendre de", cn:"依赖", ex:"On dépend de plus en plus des outils numériques." },
+      { w:"connecter", ex:"Internet nous connecte au monde entier." },
+      { w:"partager", ex:"On partage trop d'informations personnelles en ligne." },
+      { w:"contrôler", ex:"Les parents doivent contrôler l'usage des écrans." },
+      { w:"accéder à", ex:"Internet permet d'accéder à une quantité d'informations immense." },
+      { w:"surveiller", ex:"Les caméras de surveillance améliorent la sécurité." },
+      { w:"dépendre de", ex:"On dépend de plus en plus des outils numériques." },
     ],
     adj: [
-      { w:"numérique", cn:"数字的", ex:"La transformation numérique touche tous les secteurs." },
-      { w:"connecté(e)", cn:"联网的/在线的", ex:"Nous sommes constamment connectés à nos téléphones." },
-      { w:"virtuel(le)", cn:"虚拟的", ex:"Les amitiés virtuelles sont-elles aussi fortes que les vraies ?" },
-      { w:"addictif / addictive", cn:"令人上瘾的", ex:"Les réseaux sociaux sont conçus pour être addictifs." },
-      { w:"indispensable", cn:"不可或缺的", ex:"Internet est devenu indispensable dans notre quotidien." },
+      { w:"numérique", ex:"La transformation numérique touche tous les secteurs." },
+      { w:"connecté(e)", ex:"Nous sommes constamment connectés à nos téléphones." },
+      { w:"virtuel(le)", ex:"Les amitiés virtuelles sont-elles aussi fortes que les vraies ?" },
+      { w:"addictif / addictive", ex:"Les réseaux sociaux sont conçus pour être addictifs." },
+      { w:"indispensable", ex:"Internet est devenu indispensable dans notre quotidien." },
     ],
     express: [
-      { w:"force est de constater que", cn:"不得不承认", ex:"Force est de constater que la technologie a changé nos vies." },
-      { w:"il ne faut pas oublier que", cn:"不要忘记……", ex:"Il ne faut pas oublier que la technologie peut aussi isoler." },
-      { w:"dans une certaine mesure", cn:"在一定程度上", ex:"Dans une certaine mesure, Internet améliore notre qualité de vie." },
+      { w:"force est de constater que", ex:"Force est de constater que la technologie a changé nos vies." },
+      { w:"il ne faut pas oublier que", ex:"Il ne faut pas oublier que la technologie peut aussi isoler." },
+      { w:"dans une certaine mesure", ex:"Dans une certaine mesure, Internet améliore notre qualité de vie." },
     ],
   },
   enviro: {
     noms: [
-      { w:"le réchauffement climatique", cn:"气候变暖", ex:"Le réchauffement climatique est l'enjeu majeur de notre siècle." },
-      { w:"les énergies renouvelables (f.pl)", cn:"可再生能源", ex:"Les énergies renouvelables sont essentielles pour l'avenir." },
-      { w:"les déchets (m.pl)", cn:"垃圾/废物", ex:"Il faut trier ses déchets pour réduire la pollution." },
-      { w:"l'empreinte carbone (f)", cn:"碳足迹", ex:"Chaque citoyen doit réduire son empreinte carbone." },
-      { w:"la biodiversité", cn:"生物多样性", ex:"La biodiversité est menacée par l'activité humaine." },
-      { w:"le développement durable", cn:"可持续发展", ex:"Le développement durable concilie économie et environnement." },
-      { w:"le surtourisme", cn:"过度旅游", ex:"Le surtourisme détruit les sites naturels et historiques." },
-      { w:"la pollution atmosphérique", cn:"大气污染", ex:"La pollution atmosphérique cause des maladies respiratoires." },
+      { w:"le réchauffement climatique", ex:"Le réchauffement climatique est l'enjeu majeur de notre siècle." },
+      { w:"les énergies renouvelables (f.pl)", ex:"Les énergies renouvelables sont essentielles pour l'avenir." },
+      { w:"les déchets (m.pl)", ex:"Il faut trier ses déchets pour réduire la pollution." },
+      { w:"l'empreinte carbone (f)", ex:"Chaque citoyen doit réduire son empreinte carbone." },
+      { w:"la biodiversité", ex:"La biodiversité est menacée par l'activité humaine." },
+      { w:"le développement durable", ex:"Le développement durable concilie économie et environnement." },
+      { w:"le surtourisme", ex:"Le surtourisme détruit les sites naturels et historiques." },
+      { w:"la pollution atmosphérique", ex:"La pollution atmosphérique cause des maladies respiratoires." },
     ],
     verbes: [
-      { w:"recycler", cn:"回收/循环利用", ex:"Il est important de recycler ses déchets." },
-      { w:"préserver", cn:"保护/保存", ex:"On doit préserver les espèces en voie d'extinction." },
-      { w:"polluer", cn:"污染", ex:"Les voitures polluent l'air des villes." },
-      { w:"protéger", cn:"保护", ex:"Chacun doit agir pour protéger l'environnement." },
-      { w:"réduire", cn:"减少", ex:"Réduire notre consommation est essentiel." },
-      { w:"sensibiliser", cn:"提高意识", ex:"Il faut sensibiliser les jeunes aux enjeux environnementaux." },
+      { w:"recycler", ex:"Il est important de recycler ses déchets." },
+      { w:"préserver", ex:"On doit préserver les espèces en voie d'extinction." },
+      { w:"polluer", ex:"Les voitures polluent l'air des villes." },
+      { w:"protéger", ex:"Chacun doit agir pour protéger l'environnement." },
+      { w:"réduire", ex:"Réduire notre consommation est essentiel." },
+      { w:"sensibiliser", ex:"Il faut sensibiliser les jeunes aux enjeux environnementaux." },
     ],
     adj: [
-      { w:"écologique", cn:"生态的/环保的", ex:"Les transports écologiques réduisent la pollution." },
-      { w:"durable", cn:"可持续的", ex:"Il faut adopter un mode de vie plus durable." },
-      { w:"renouvelable", cn:"可再生的", ex:"L'énergie solaire est renouvelable et propre." },
-      { w:"polluant(e)", cn:"污染的", ex:"Les combustibles fossiles sont très polluants." },
-      { w:"responsable", cn:"负责任的", ex:"Être un consommateur responsable fait la différence." },
+      { w:"écologique", ex:"Les transports écologiques réduisent la pollution." },
+      { w:"durable", ex:"Il faut adopter un mode de vie plus durable." },
+      { w:"renouvelable", ex:"L'énergie solaire est renouvelable et propre." },
+      { w:"polluant(e)", ex:"Les combustibles fossiles sont très polluants." },
+      { w:"responsable", ex:"Être un consommateur responsable fait la différence." },
     ],
     express: [
-      { w:"il est urgent de", cn:"……是紧迫的", ex:"Il est urgent de réduire nos émissions de CO₂." },
-      { w:"nous avons tous un rôle à jouer", cn:"我们每个人都有责任", ex:"Nous avons tous un rôle à jouer dans la protection de l'environnement." },
-      { w:"à long terme", cn:"从长远来看", ex:"À long terme, les énergies renouvelables sont rentables." },
+      { w:"il est urgent de", ex:"Il est urgent de réduire nos émissions de CO₂." },
+      { w:"nous avons tous un rôle à jouer", ex:"Nous avons tous un rôle à jouer dans la protection de l'environnement." },
+      { w:"à long terme", ex:"À long terme, les énergies renouvelables sont rentables." },
     ],
   },
   sante: {
     noms: [
-      { w:"la santé mentale", cn:"心理健康", ex:"La santé mentale est aussi importante que la santé physique." },
-      { w:"le stress", cn:"压力/紧张", ex:"Le stress chronique est dangereux pour la santé." },
-      { w:"les médicaments (m.pl)", cn:"药物", ex:"La surmédicamentation est un problème reconnu." },
-      { w:"la prévention", cn:"预防", ex:"La prévention est préférable au traitement." },
-      { w:"le bien-être", cn:"幸福/福祉", ex:"Le bien-être physique et mental est essentiel." },
-      { w:"l'alimentation (f)", cn:"饮食/营养", ex:"Une bonne alimentation prévient de nombreuses maladies." },
-      { w:"la sédentarité", cn:"久坐不动", ex:"La sédentarité est un facteur de risque important." },
-      { w:"les soins (m.pl)", cn:"医疗护理", ex:"L'accès aux soins doit être garanti pour tous." },
+      { w:"la santé mentale", ex:"La santé mentale est aussi importante que la santé physique." },
+      { w:"le stress", ex:"Le stress chronique est dangereux pour la santé." },
+      { w:"les médicaments (m.pl)", ex:"La surmédicamentation est un problème reconnu." },
+      { w:"la prévention", ex:"La prévention est préférable au traitement." },
+      { w:"le bien-être", ex:"Le bien-être physique et mental est essentiel." },
+      { w:"l'alimentation (f)", ex:"Une bonne alimentation prévient de nombreuses maladies." },
+      { w:"la sédentarité", ex:"La sédentarité est un facteur de risque important." },
+      { w:"les soins (m.pl)", ex:"L'accès aux soins doit être garanti pour tous." },
     ],
     verbes: [
-      { w:"soigner", cn:"治疗/照料", ex:"Il est important de bien se soigner quand on est malade." },
-      { w:"prévenir", cn:"预防", ex:"Il vaut mieux prévenir que guérir." },
-      { w:"guérir", cn:"痊愈/治愈", ex:"Certaines maladies se guérissent facilement avec des médicaments." },
-      { w:"gérer", cn:"管理/应对", ex:"Il faut apprendre à gérer son stress." },
-      { w:"consulter", cn:"就诊/咨询", ex:"Il est conseillé de consulter un médecin régulièrement." },
-      { w:"s'alimenter", cn:"饮食/进食", ex:"Bien s'alimenter est la base d'une bonne santé." },
+      { w:"soigner", ex:"Il est important de bien se soigner quand on est malade." },
+      { w:"prévenir", ex:"Il vaut mieux prévenir que guérir." },
+      { w:"guérir", ex:"Certaines maladies se guérissent facilement avec des médicaments." },
+      { w:"gérer", ex:"Il faut apprendre à gérer son stress." },
+      { w:"consulter", ex:"Il est conseillé de consulter un médecin régulièrement." },
+      { w:"s'alimenter", ex:"Bien s'alimenter est la base d'une bonne santé." },
     ],
     adj: [
-      { w:"sain(e)", cn:"健康的", ex:"Un mode de vie sain comprend sport et alimentation équilibrée." },
-      { w:"chronique", cn:"慢性的/长期的", ex:"Le stress chronique affecte le cœur et l'immunité." },
-      { w:"préventif / préventive", cn:"预防性的", ex:"Des mesures préventives permettent d'éviter de nombreuses maladies." },
-      { w:"efficace", cn:"有效的", ex:"Ce traitement est très efficace contre cette maladie." },
-      { w:"équilibré(e)", cn:"均衡的", ex:"Une alimentation équilibrée est essentielle à la santé." },
+      { w:"sain(e)", ex:"Un mode de vie sain comprend sport et alimentation équilibrée." },
+      { w:"chronique", ex:"Le stress chronique affecte le cœur et l'immunité." },
+      { w:"préventif / préventive", ex:"Des mesures préventives permettent d'éviter de nombreuses maladies." },
+      { w:"efficace", ex:"Ce traitement est très efficace contre cette maladie." },
+      { w:"équilibré(e)", ex:"Une alimentation équilibrée est essentielle à la santé." },
     ],
     express: [
-      { w:"il va sans dire que", cn:"不言而喻", ex:"Il va sans dire que la santé est notre bien le plus précieux." },
-      { w:"mieux vaut prévenir que guérir", cn:"预防胜于治疗", ex:"Mieux vaut prévenir que guérir — c'est le principe de la médecine préventive." },
-      { w:"dans une société idéale", cn:"在理想的社会中", ex:"Dans une société idéale, les soins seraient gratuits pour tous." },
+      { w:"il va sans dire que", ex:"Il va sans dire que la santé est notre bien le plus précieux." },
+      { w:"mieux vaut prévenir que guérir", ex:"Mieux vaut prévenir que guérir — c'est le principe de la médecine préventive." },
+      { w:"dans une société idéale", ex:"Dans une société idéale, les soins seraient gratuits pour tous." },
     ],
   },
   loisirs: {
     noms: [
-      { w:"les loisirs (m.pl)", cn:"休闲活动", ex:"Les loisirs sont essentiels pour se ressourcer." },
-      { w:"le voyage", cn:"旅行", ex:"Le voyage élargit les horizons et ouvre l'esprit." },
-      { w:"le tourisme", cn:"旅游业", ex:"Le tourisme peut nuire à l'environnement si mal géré." },
-      { w:"les jeux vidéo (m.pl)", cn:"电子游戏", ex:"Les jeux vidéo peuvent développer des compétences cognitives." },
-      { w:"la dépendance", cn:"依赖/成瘾", ex:"La dépendance aux jeux vidéo est reconnue par l'OMS." },
-      { w:"la détente", cn:"放松", ex:"La lecture est une excellente forme de détente." },
-      { w:"le patrimoine", cn:"遗产/文化遗址", ex:"Le surtourisme menace le patrimoine historique." },
-      { w:"l'aventure (f)", cn:"冒险", ex:"Voyager seul est une vraie aventure." },
+      { w:"les loisirs (m.pl)", ex:"Les loisirs sont essentiels pour se ressourcer." },
+      { w:"le voyage", ex:"Le voyage élargit les horizons et ouvre l'esprit." },
+      { w:"le tourisme", ex:"Le tourisme peut nuire à l'environnement si mal géré." },
+      { w:"les jeux vidéo (m.pl)", ex:"Les jeux vidéo peuvent développer des compétences cognitives." },
+      { w:"la dépendance", ex:"La dépendance aux jeux vidéo est reconnue par l'OMS." },
+      { w:"la détente", ex:"La lecture est une excellente forme de détente." },
+      { w:"le patrimoine", ex:"Le surtourisme menace le patrimoine historique." },
+      { w:"l'aventure (f)", ex:"Voyager seul est une vraie aventure." },
     ],
     verbes: [
-      { w:"voyager", cn:"旅行", ex:"Voyager permet de découvrir d'autres cultures." },
-      { w:"se détendre", cn:"放松", ex:"Les loisirs permettent de se détendre après le travail." },
-      { w:"découvrir", cn:"发现", ex:"Voyager, c'est découvrir le monde et soi-même." },
-      { w:"s'évader", cn:"逃离/放松心情", ex:"Les vacances permettent de s'évader du quotidien." },
-      { w:"enrichir", cn:"丰富", ex:"Les voyages enrichissent notre vision du monde." },
-      { w:"pratiquer", cn:"练习/从事", ex:"Il pratique le tennis depuis l'enfance." },
+      { w:"voyager", ex:"Voyager permet de découvrir d'autres cultures." },
+      { w:"se détendre", ex:"Les loisirs permettent de se détendre après le travail." },
+      { w:"découvrir", ex:"Voyager, c'est découvrir le monde et soi-même." },
+      { w:"s'évader", ex:"Les vacances permettent de s'évader du quotidien." },
+      { w:"enrichir", ex:"Les voyages enrichissent notre vision du monde." },
+      { w:"pratiquer", ex:"Il pratique le tennis depuis l'enfance." },
     ],
     adj: [
-      { w:"enrichissant(e)", cn:"丰富的/有益的", ex:"Un voyage à l'étranger est toujours très enrichissant." },
-      { w:"divertissant(e)", cn:"有趣的/消遣性的", ex:"Les jeux vidéo peuvent être très divertissants." },
-      { w:"responsable", cn:"负责任的", ex:"Il faut pratiquer un tourisme responsable." },
-      { w:"indépendant(e)", cn:"独立的", ex:"Voyager seul rend plus indépendant." },
-      { w:"culturel(le)", cn:"文化的", ex:"Une sortie culturelle enrichit les connaissances." },
+      { w:"enrichissant(e)", ex:"Un voyage à l'étranger est toujours très enrichissant." },
+      { w:"divertissant(e)", ex:"Les jeux vidéo peuvent être très divertissants." },
+      { w:"responsable", ex:"Il faut pratiquer un tourisme responsable." },
+      { w:"indépendant(e)", ex:"Voyager seul rend plus indépendant." },
+      { w:"culturel(le)", ex:"Une sortie culturelle enrichit les connaissances." },
     ],
     express: [
-      { w:"c'est la raison pour laquelle", cn:"这就是为什么", ex:"C'est la raison pour laquelle je voyage souvent." },
-      { w:"tout bien considéré", cn:"综合考虑", ex:"Tout bien considéré, voyager seul présente plus d'avantages." },
-      { w:"on ne saurait nier que", cn:"不能否认", ex:"On ne saurait nier que les loisirs sont essentiels à l'équilibre." },
+      { w:"c'est la raison pour laquelle", ex:"C'est la raison pour laquelle je voyage souvent." },
+      { w:"tout bien considéré", ex:"Tout bien considéré, voyager seul présente plus d'avantages." },
+      { w:"on ne saurait nier que", ex:"On ne saurait nier que les loisirs sont essentiels à l'équilibre." },
     ],
   },
   culture: {
     noms: [
-      { w:"le patrimoine", cn:"遗产/文化遗址", ex:"Il faut préserver le patrimoine culturel pour les générations futures." },
-      { w:"les traditions (f.pl)", cn:"传统", ex:"Préserver ses traditions est important pour l'identité." },
-      { w:"l'identité culturelle (f)", cn:"文化身份", ex:"L'identité culturelle se construit dès l'enfance." },
-      { w:"la diversité", cn:"多样性", ex:"La diversité culturelle enrichit toute la société." },
-      { w:"l'intégration (f)", cn:"融合/融入", ex:"L'intégration passe par l'apprentissage de la langue locale." },
-      { w:"la langue maternelle", cn:"母语", ex:"La langue maternelle est au cœur de notre identité." },
-      { w:"le musée", cn:"博物馆", ex:"Les musées gratuits démocratisent l'accès à la culture." },
-      { w:"l'accès à la culture (m)", cn:"文化获取", ex:"L'accès à la culture doit être un droit universel." },
+      { w:"le patrimoine", ex:"Il faut préserver le patrimoine culturel pour les générations futures." },
+      { w:"les traditions (f.pl)", ex:"Préserver ses traditions est important pour l'identité." },
+      { w:"l'identité culturelle (f)", ex:"L'identité culturelle se construit dès l'enfance." },
+      { w:"la diversité", ex:"La diversité culturelle enrichit toute la société." },
+      { w:"l'intégration (f)", ex:"L'intégration passe par l'apprentissage de la langue locale." },
+      { w:"la langue maternelle", ex:"La langue maternelle est au cœur de notre identité." },
+      { w:"le musée", ex:"Les musées gratuits démocratisent l'accès à la culture." },
+      { w:"l'accès à la culture (m)", ex:"L'accès à la culture doit être un droit universel." },
     ],
     verbes: [
-      { w:"préserver", cn:"保护/保存", ex:"Il faut préserver les traditions culturelles sans se fermer au monde." },
-      { w:"s'intégrer", cn:"融入", ex:"Pour s'intégrer, il faut apprendre la langue du pays d'accueil." },
-      { w:"partager", cn:"分享", ex:"La culture se partage et s'enrichit au contact des autres." },
-      { w:"transmettre", cn:"传承", ex:"Les parents transmettent leurs valeurs culturelles à leurs enfants." },
-      { w:"s'adapter", cn:"适应", ex:"Il faut savoir s'adapter à la culture du pays d'accueil." },
-      { w:"valoriser", cn:"重视/弘扬", ex:"On doit valoriser la diversité culturelle dans les écoles." },
+      { w:"préserver", ex:"Il faut préserver les traditions culturelles sans se fermer au monde." },
+      { w:"s'intégrer", ex:"Pour s'intégrer, il faut apprendre la langue du pays d'accueil." },
+      { w:"partager", ex:"La culture se partage et s'enrichit au contact des autres." },
+      { w:"transmettre", ex:"Les parents transmettent leurs valeurs culturelles à leurs enfants." },
+      { w:"s'adapter", ex:"Il faut savoir s'adapter à la culture du pays d'accueil." },
+      { w:"valoriser", ex:"On doit valoriser la diversité culturelle dans les écoles." },
     ],
     adj: [
-      { w:"culturel(le)", cn:"文化的", ex:"Les échanges culturels enrichissent les deux parties." },
-      { w:"universel(le)", cn:"普遍的/通用的", ex:"L'accès à la culture devrait être universel." },
-      { w:"traditionnel(le)", cn:"传统的", ex:"Les fêtes traditionnelles renforcent l'identité collective." },
-      { w:"ouvert(e)", cn:"开放的", ex:"Être ouvert aux autres cultures est une richesse." },
-      { w:"gratuit(e)", cn:"免费的", ex:"Les musées gratuits attirent un public plus varié." },
+      { w:"culturel(le)", ex:"Les échanges culturels enrichissent les deux parties." },
+      { w:"universel(le)", ex:"L'accès à la culture devrait être universel." },
+      { w:"traditionnel(le)", ex:"Les fêtes traditionnelles renforcent l'identité collective." },
+      { w:"ouvert(e)", ex:"Être ouvert aux autres cultures est une richesse." },
+      { w:"gratuit(e)", ex:"Les musées gratuits attirent un public plus varié." },
     ],
     express: [
-      { w:"il est primordial de", cn:"……至关重要", ex:"Il est primordial de respecter les cultures des autres." },
-      { w:"loin de là", cn:"远非如此", ex:"La culture n'est pas réservée aux élites — loin de là." },
-      { w:"à cet égard", cn:"在这方面", ex:"À cet égard, les musées gratuits jouent un rôle clé." },
+      { w:"il est primordial de", ex:"Il est primordial de respecter les cultures des autres." },
+      { w:"loin de là", ex:"La culture n'est pas réservée aux élites — loin de là." },
+      { w:"à cet égard", ex:"À cet égard, les musées gratuits jouent un rôle clé." },
     ],
   },
 };
@@ -2380,10 +2358,10 @@ function buildVocab(catId) {
   const v = VOCAB[catId];
   if (!v) return;
   const sections = [
-    { key:'noms',    label:'Noms', cn:'名词', icon:'🔵' },
-    { key:'verbes',  label:'Verbes', cn:'动词', icon:'🟢' },
-    { key:'adj',     label:'Adjectifs', cn:'形容词', icon:'🟡' },
-    { key:'express', label:'Expressions clés', cn:'关键表达', icon:'🟣' },
+    { key:'noms',    label:'Nouns', icon:'🔵' },
+    { key:'verbes',  label:'Verbs', icon:'🟢' },
+    { key:'adj',     label:'Adjectives', icon:'🟡' },
+    { key:'express', label:'Key phrases', icon:'🟣' },
   ];
   const el = document.getElementById('vocab-container');
   if (!el) return;
@@ -2393,13 +2371,12 @@ function buildVocab(catId) {
     return `
       <div class="vocab-section">
         <div class="vocab-section-head ${s.key === 'noms' ? 'noms' : s.key === 'verbes' ? 'verbes' : s.key === 'adj' ? 'adj' : 'express'}">
-          ${s.icon} ${s.label} <span class="vc-cn">· ${s.cn}</span>
+          ${s.icon} ${s.label} 
         </div>
         <div class="vocab-grid">
           ${words.map(w => `
             <div class="vocab-card">
               <div class="vocab-word">${w.w}</div>
-              <div class="vocab-cn-label">${w.cn}</div>
               <div class="vocab-ex">${w.ex}</div>
             </div>
           `).join('')}
@@ -2425,7 +2402,7 @@ function buildPractice(q) {
 
   el.innerHTML = `
     <div class="practice-intro">
-      <strong>✏️ Zone de pratique libre</strong> — 自由练习区<br>
+      <strong>✏️ Zone de pratique libre</strong><br>
       <span style="font-size:.8rem;color:#4A5A6A">Écrivez votre propre réponse ci-dessous. Cliquez sur <strong>Voir exemple</strong> pour comparer. Utilisez <strong>Exporter</strong> pour envoyer votre travail à votre professeur.</span>
     </div>
 
@@ -2436,7 +2413,7 @@ function buildPractice(q) {
 
     <div class="practice-block">
       <div class="practice-block-head intro-h">
-        Introduction <span class="practice-hint">开头段 · ~30 secondes</span>
+        Introduction <span class="practice-hint">~30 secondes</span>
       </div>
       <textarea class="practice-textarea" id="prac-intro" rows="4"
         placeholder="Merci de m'avoir donné la parole. La question est : « ${q.fr} » Pour ma part, je pense que…"></textarea>
@@ -2445,7 +2422,7 @@ function buildPractice(q) {
 
     <div class="practice-block">
       <div class="practice-block-head dev-h">
-        Développement <span class="practice-hint">论述段 · ~3 minutes</span>
+        Développement <span class="practice-hint">~3 minutes</span>
       </div>
       <textarea class="practice-textarea" id="prac-dev" rows="7"
         placeholder="Tout d'abord… Par exemple… Ensuite… En effet… Cependant… Malgré cela…"></textarea>
@@ -2454,7 +2431,7 @@ function buildPractice(q) {
 
     <div class="practice-block">
       <div class="practice-block-head ccl-h">
-        Conclusion <span class="practice-hint">结尾段 · ~1 minute</span>
+        Conclusion <span class="practice-hint">~1 minute</span>
       </div>
       <textarea class="practice-textarea" id="prac-ccl" rows="3"
         placeholder="En conclusion… Et je vous remercie de m'avoir écouté(e)."></textarea>
@@ -2463,24 +2440,24 @@ function buildPractice(q) {
 
     <!-- NOTES -->
     <div class="notes-block">
-      <div class="notes-head">📝 Notes personnelles · 个人笔记</div>
+      <div class="notes-head">📝 Notes personnelles</div>
       <textarea class="notes-textarea" id="notes-area"
         placeholder="Vocabulaire à retenir, idées, remarques du professeur…"></textarea>
       <div class="notes-save-bar">
         <button class="btn-save-note" onclick="saveNote('${q.fr}')">💾 Sauvegarder</button>
         <span class="note-saved-msg" id="note-saved-msg">✓ Sauvegardé !</span>
-        <span style="font-size:.72rem;color:#A0B0C0;margin-left:auto">保存在您自己的浏览器中</span>
+        <span style="font-size:.72rem;color:#A0B0C0;margin-left:auto">Saved in your own browser</span>
       </div>
     </div>
 
     <div class="practice-actions">
-      <button class="btn-show-ref" onclick="toggleRef()">👁 Voir exemple de référence · 查看参考</button>
-      <button class="btn-export" onclick="exportWork('${q.fr.replace(/'/g,"\\'")}')">📤 Exporter pour le professeur · 导出作业</button>
+      <button class="btn-show-ref" onclick="toggleRef()">👁 Voir exemple de référence</button>
+      <button class="btn-export" onclick="exportWork('${q.fr.replace(/'/g,"\\'")}')">📤 Exporter pour le professeur</button>
       <button class="btn-clear" onclick="clearPractice()">🗑 Effacer tout</button>
     </div>
 
     <div class="practice-ref" id="practice-ref">
-      <div class="ref-label">📖 Exemple de référence · 参考范文</div>
+      <div class="ref-label">📖 Exemple de référence</div>
       <p><strong style="color:var(--mli-blue)">Introduction</strong><br>${refIntro}</p>
       <p style="margin-top:.8rem"><strong style="color:var(--mli-blue)">Développement</strong><br>${refDev}</p>
       <p style="margin-top:.8rem"><strong style="color:var(--mli-blue)">Conclusion</strong><br>${refCcl}</p>
@@ -2533,7 +2510,7 @@ function toggleRef() {
   const btn = event.target;
   const isOpen = ref.style.display === 'block';
   ref.style.display = isOpen ? 'none' : 'block';
-  btn.textContent = isOpen ? '👁 Voir exemple de référence · 查看参考' : '🙈 Masquer exemple · 隐藏参考';
+  btn.textContent = isOpen ? '👁 Voir exemple de référence' : '🙈 Masquer exemple';
 }
 
 function clearPractice() {
@@ -2636,7 +2613,6 @@ ${notes}`;
 // ═══════════════════════════════════════════════
 function buildDetail(q) {
   document.getElementById('detail-qfr').textContent = q.fr;
-  document.getElementById('detail-qcn').textContent = q.cn;
 
   // Reset to Arguments tab
   switchTab('arguments');
@@ -2650,7 +2626,6 @@ function buildDetail(q) {
   pourEl.innerHTML = q.pour.map((a,i) => `
     <div class="arg-item">
       <div class="arg-main">• ${a.arg}</div>
-      <div class="arg-cn-small">${a.cn}</div>
       <div class="arg-ex">Exemple : ${a.ex}</div>
     </div>
   `).join('');
@@ -2660,7 +2635,6 @@ function buildDetail(q) {
   contreEl.innerHTML = q.contre.map((a,i) => `
     <div class="arg-item">
       <div class="arg-main">• ${a.arg}</div>
-      <div class="arg-cn-small">${a.cn}</div>
       <div class="arg-ex">Exemple : ${a.ex}</div>
     </div>
   `).join('');
@@ -2675,12 +2649,14 @@ function buildDetail(q) {
 
 // ── Navigation ──
 function goBack() {
+  t3TimerReset();
   document.getElementById('view-detail').style.display = 'none';
   document.getElementById('view-list').style.display = '';
   window.scrollTo(0, 0);
 }
 
 function openDetail(q) {
+  t3TimerReset();
   buildDetail(q);
   buildVocab(q.cat);
   buildPractice(q);
@@ -2704,7 +2680,13 @@ function pickRandom(catId) {
   const q  = extras[Math.floor(Math.random() * extras.length)];
   const el = document.getElementById('random-result-' + catId);
   el.style.display = 'block';
-  el.innerHTML = '<div class="random-q">🎙️ ' + q + '</div>';
+  el.innerHTML = '<div class="random-q">🎙️ ' + q + '</div>' +
+    '<div class="t3-timer-bar" style="margin-top:.9rem">' +
+      '<div class="t3-timer-display" id="gt-disp-rnd">4:30</div>' +
+      '<div class="t3-timer-label">🎤 Task 3 · Expression d\'un point de vue — 4 min 30 (no preparation)</div>' +
+      '<button class="t3-timer-btn" id="gt-btn-rnd" onclick="gTimerAction(\'rnd\',270)">▶ Start</button>' +
+    '</div>';
+  gTimerReset('rnd',270);
 }
 
 // ── Init ──
@@ -2722,7 +2704,7 @@ function pickRandom(catId) {
     }).join('');
     document.getElementById('extra-panel').innerHTML =
       '<div class="extra-random-bar">' +
-        '<button class="random-btn" onclick="pickRandom(CAT_ID)">🎲 Tirer un sujet au hasard · 随机抽题</button>' +
+        '<button class="random-btn" onclick="pickRandom(CAT_ID)">🎲 Draw a random topic </button>' +
         '<div class="random-result" id="random-result-placeholder" style="display:none"></div>' +
       '</div>' +
       '<div class="extra-list">' + rows + '</div>';
@@ -2739,13 +2721,77 @@ function pickRandom(catId) {
       '<div class="q-num-badge">' + (i+1) + '</div>' +
       '<div class="q-row-text">' +
         '<div class="q-row-fr">' + q.fr + '</div>' +
-        '<div class="q-row-cn">' + q.cn + '</div>' +
       '</div><div class="q-arrow">›</div>';
     row.onclick = function() { openDetail(q); };
     grid.appendChild(row);
   });
 })();
 
+
+// ═══ TIMER · Task 3 countdown (classroom use)═══
+var t3Timer = { total:270, remaining:270, interval:null, running:false };
+function fmtT3(s){ var m=Math.floor(s/60), ss=s%60; return m+':'+(ss<10?'0':'')+ss; }
+function t3TimerAction(){
+  var d=document.getElementById('t3-timer-display'), b=document.getElementById('t3-timer-btn');
+  if(!d||!b) return;
+  if(t3Timer.remaining<=0){ t3TimerReset(); return; }
+  if(t3Timer.running){
+    clearInterval(t3Timer.interval); t3Timer.running=false;
+    b.textContent='▶ Resume'; b.className='t3-timer-btn'; return;
+  }
+  t3Timer.running=true; b.textContent='⏸ Pause'; b.className='t3-timer-btn running';
+  t3Timer.interval=setInterval(function(){
+    t3Timer.remaining--; d.textContent=fmtT3(Math.max(0,t3Timer.remaining));
+    if(t3Timer.remaining<=0){
+      clearInterval(t3Timer.interval); t3Timer.running=false;
+      d.textContent='0:00'; d.className='t3-timer-display danger';
+      b.textContent='🔄 Reset'; b.className='t3-timer-btn done';
+      if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+    } else if(t3Timer.remaining<=30){ d.className='t3-timer-display danger'; }
+    else if(t3Timer.remaining<=60){ d.className='t3-timer-display warning'; }
+    else { d.className='t3-timer-display'; }
+  },1000);
+}
+function t3TimerReset(){
+  clearInterval(t3Timer.interval); t3Timer.remaining=t3Timer.total; t3Timer.running=false;
+  var d=document.getElementById('t3-timer-display'), b=document.getElementById('t3-timer-btn');
+  if(d){ d.textContent=fmtT3(t3Timer.total); d.className='t3-timer-display'; }
+  if(b){ b.textContent='▶ Start'; b.className='t3-timer-btn'; }
+}
+
+// -- Fullscreen (classroom) --
+function toggleFS(){
+  if(!document.fullscreenElement){ (document.documentElement.requestFullscreen||function(){}).call(document.documentElement).catch(function(){}); }
+  else { (document.exitFullscreen||function(){}).call(document).catch(function(){}); }
+}
+document.addEventListener('fullscreenchange', function(){
+  var b=document.getElementById('fsBtn'); if(b) b.textContent = document.fullscreenElement ? '⛶ Exit fullscreen' : '⛶ Fullscreen';
+});
+// -- Generic timer for the random-draw sujet --
+var gTimers = {};
+function gFmt(s){ var m=Math.floor(s/60), ss=s%60; return m+':'+(ss<10?'0':'')+ss; }
+function gTimerAction(key,total){
+  var st=gTimers[key]; if(!st){ st=gTimers[key]={remaining:total,interval:null,running:false,total:total}; }
+  var d=document.getElementById('gt-disp-'+key), b=document.getElementById('gt-btn-'+key);
+  if(!d||!b) return;
+  if(st.remaining<=0){ gTimerReset(key,total); return; }
+  if(st.running){ clearInterval(st.interval); st.running=false; b.textContent='▶ Resume'; b.className='t3-timer-btn'; return; }
+  st.running=true; b.textContent='⏸ Pause'; b.className='t3-timer-btn running';
+  st.interval=setInterval(function(){
+    st.remaining--; d.textContent=gFmt(Math.max(0,st.remaining));
+    if(st.remaining<=0){ clearInterval(st.interval); st.running=false; d.textContent='0:00'; d.className='t3-timer-display danger'; b.textContent='🔄 Reset'; b.className='t3-timer-btn done'; if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]); }
+    else if(st.remaining<=30){ d.className='t3-timer-display danger'; }
+    else if(st.remaining<=60){ d.className='t3-timer-display warning'; }
+    else { d.className='t3-timer-display'; }
+  },1000);
+}
+function gTimerReset(key,total){
+  var st=gTimers[key]; if(st&&st.interval) clearInterval(st.interval);
+  gTimers[key]={remaining:total,interval:null,running:false,total:total};
+  var d=document.getElementById('gt-disp-'+key), b=document.getElementById('gt-btn-'+key);
+  if(d){ d.textContent=gFmt(total); d.className='t3-timer-display'; }
+  if(b){ b.textContent='▶ Start'; b.className='t3-timer-btn'; }
+}
 </script>
 </body>
 </html>
