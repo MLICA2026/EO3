@@ -1025,6 +1025,19 @@ header {
 }
 .btn-copy:hover { opacity: .85; }
 
+.send-notice {
+  margin-top: .8rem;
+  background: #FFF6E5;
+  border: 1.5px solid #F2B84B;
+  border-left: 5px solid #E89B0C;
+  border-radius: 10px;
+  padding: .7rem .9rem;
+  font-size: .82rem;
+  line-height: 1.55;
+  color: #5A4300;
+}
+.send-notice strong { color: #8A5A00; }
+
 .char-count {
   font-size: .7rem;
   color: var(--mli-grey);
@@ -2492,17 +2505,17 @@ function buildPractice(q) {
       <div class="notes-head">📝 Notes personnelles</div>
       <textarea class="notes-textarea" id="notes-area"
         placeholder="Vocabulaire à retenir, idées, remarques du professeur…"></textarea>
-      <div class="notes-save-bar">
-        <button class="btn-save-note" onclick="saveNote('${q.fr}')">💾 Sauvegarder</button>
-        <span class="note-saved-msg" id="note-saved-msg">✓ Sauvegardé !</span>
-        <span style="font-size:.72rem;color:#A0B0C0;margin-left:auto">Saved in your own browser</span>
-      </div>
     </div>
 
     <div class="practice-actions">
       <button class="btn-show-ref" onclick="toggleRef()">👁 Voir exemple de référence</button>
-      <button class="btn-export" onclick="exportWork('${q.fr.replace(/'/g,"\\'")}')">📤 Exporter pour le professeur</button>
+      <button class="btn-export" onclick="copyExport()">📋 Copier pour le professeur</button>
       <button class="btn-clear" onclick="clearPractice()">🗑 Effacer tout</button>
+    </div>
+
+    <div class="send-notice">
+      ⚠️ <strong>Votre texte n'est pas sauvegardé et le professeur ne peut pas le voir.</strong>
+      Cliquez sur « 📋 Copier pour le professeur », puis collez le texte dans le groupe de la plateforme pour l'envoyer au professeur.
     </div>
 
     <div class="practice-ref" id="practice-ref">
@@ -2512,27 +2525,7 @@ function buildPractice(q) {
       <p style="margin-top:.8rem"><strong style="color:var(--mli-blue)">Conclusion</strong><br>${refCcl}</p>
     </div>
 
-    <div class="export-preview" id="export-preview">
-      <h3>📄 Devoir — TCF Canada Tâche 3</h3>
-      <div class="export-meta" id="export-meta"></div>
-      <div class="export-section">Introduction</div>
-      <div id="exp-intro-text"></div>
-      <div class="export-section">Développement</div>
-      <div id="exp-dev-text"></div>
-      <div class="export-section">Conclusion</div>
-      <div id="exp-ccl-text"></div>
-      <div class="export-section">Notes personnelles</div>
-      <div id="exp-notes-text"></div>
-      <div class="export-copy-bar">
-        <button class="btn-copy" onclick="copyExport()">📋 Copier tout</button>
-        <button class="btn-copy" style="background:var(--mli-green)" onclick="downloadExport()">⬇ Télécharger .txt</button>
-      </div>
-    </div>
   `;
-
-  // Load saved note if any
-  const savedNote = localStorage.getItem('note_' + q.fr);
-  if (savedNote) document.getElementById('notes-area').value = savedNote;
 
   // Word counters
   ['intro','dev','ccl'].forEach(id => {
@@ -2617,7 +2610,16 @@ ${ccl}
 === NOTES PERSONNELLES ===
 ${notes}`;
 
-  navigator.clipboard.writeText(text).then(() => alert('✅ Copié dans le presse-papiers !'));
+  const done = () => alert('✅ Copié ! Collez maintenant le texte dans le groupe de la plateforme pour l\'envoyer au professeur.');
+  const fallback = () => {
+    const t = document.createElement('textarea');
+    t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); done(); } catch (e) { alert('❌ Copie impossible. Sélectionnez le texte manuellement.'); }
+    document.body.removeChild(t);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+  else fallback();
 }
 
 function downloadExport() {
